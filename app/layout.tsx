@@ -13,7 +13,7 @@ const robotoMono = Roboto_Mono({
     subsets: ['latin'],
 });
 export const metadata: Metadata = {
-    title: 'IRONLOG — Seguimiento de progreso físico',
+    title: 'GYMBROS — Seguimiento de progreso físico',
     description: 'Rastrea tus medidas, rutinas y calorías. Una app de progreso físico de alto impacto para dos atletas.',
     generator: 'v0.app',
 };

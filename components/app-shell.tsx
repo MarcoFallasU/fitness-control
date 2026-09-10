@@ -35,7 +35,7 @@ export function AppShell({ children }: {
         <div>
           <Link href="/dashboard" className="mb-8 block px-1">
             <span className="font-heading text-2xl font-extrabold tracking-tight">
-              IronLog
+              Gymbros
             </span>
           </Link>
           <NavLinks />
@@ -66,7 +66,7 @@ export function AppShell({ children }: {
         <header className="glass sticky top-4 z-40 mx-4 mt-4 flex items-center justify-between rounded-2xl px-4 py-3 lg:hidden">
           <Link href="/dashboard">
             <span className="font-heading text-xl font-extrabold tracking-tight">
-              IronLog
+              Gymbros
             </span>
           </Link>
           <button onClick={() => setOpen((v) => !v)} className="flex items-center rounded-full p-1 text-sidebar-foreground" aria-label="Cuenta">

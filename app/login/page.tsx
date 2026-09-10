@@ -12,7 +12,7 @@ export default async function LoginPage() {
 
         <section className="hidden flex-1 lg:block">
           <Link href="/" className="font-heading text-2xl font-extrabold tracking-tight">
-            IronLog
+            Gymbros
           </Link>
           <h1 className="font-heading mt-5 text-4xl font-extrabold leading-tight">
             Tu progreso,<br />en un solo lugar.

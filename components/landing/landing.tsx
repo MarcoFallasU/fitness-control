@@ -39,7 +39,7 @@ export function Landing() {
       
       <header className="relative z-20 flex items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
         <span className="font-heading text-3xl tracking-tight">
-          IRON<span className="text-brand">LOG</span>
+          GYM<span className="text-brand">BROS</span>
         </span>
         <Link href="/login" className="rounded-md bg-primary px-5 py-2.5 font-heading text-sm uppercase tracking-widest text-primary-foreground transition-transform hover:-translate-y-0.5">
           Entrar
@@ -72,7 +72,7 @@ export function Landing() {
 
           <div className="animate-rise mt-8 flex max-w-xl flex-col gap-6" style={{ animationDelay: '320ms' }}>
             <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
-              IRONLOG es tu cuaderno de entrenamiento de alto impacto. Mide tu cuerpo,
+              GYMBROS es tu cuaderno de entrenamiento de alto impacto. Mide tu cuerpo,
               construye rutinas, registra cada repetición y observa el progreso real en
               gráficas que no mienten.
             </p>

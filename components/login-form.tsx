@@ -3,10 +3,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { loginAction } from '@/app/login/actions';
-const DEMO = [
-    { username: 'marco', password: 'marco123' },
-    { username: 'jose', password: 'jose123' },
-];
 export function LoginForm() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -21,14 +17,6 @@ export function LoginForm() {
         if (result?.error) {
             setError(result.error);
         }
-    }
-    function quickFill(u: {
-        username: string;
-        password: string;
-    }) {
-        setUsername(u.username);
-        setPassword(u.password);
-        setError('');
     }
     return (<section className="glass-strong w-full max-w-sm shrink-0 rounded-3xl p-8">
       <Link href="/" className="mb-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground">
@@ -67,19 +55,5 @@ export function LoginForm() {
           <ArrowRight className="size-4 transition-transform group-hover:translate-x-1"/>
         </button>
       </form>
-
-      <div className="mt-6">
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          Cuentas de prueba
-        </p>
-        <div className="flex gap-2">
-          {DEMO.map((d) => (<button key={d.username} type="button" onClick={() => quickFill(d)} className="flex flex-1 items-center justify-between rounded-2xl border border-border bg-white/5 px-3 py-2 text-left text-sm transition-colors hover:border-ring">
-              <span className="font-semibold capitalize">{d.username}</span>
-              <span className="text-[11px] text-muted-foreground">
-                {d.password}
-              </span>
-            </button>))}
-        </div>
-      </div>
     </section>);
 }
