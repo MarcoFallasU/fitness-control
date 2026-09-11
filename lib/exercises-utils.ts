@@ -64,7 +64,7 @@ export function computePRTable(executions: RoutineExecution[], range?: DateRange
     });
     return Object.values(rows)
         .map((r) => ({ ...r, pct: r.first ? Math.round(((r.pr - r.first) / r.first) * 1000) / 10 : 0 }))
-        .sort((a, b) => b.pct - a.pct);
+        .sort((a, b) => b.pr - a.pr);
 }
 
 export function computeExerciseComparison(executionsA: RoutineExecution[], executionsB: RoutineExecution[], exerciseName: string, range?: DateRange): {
