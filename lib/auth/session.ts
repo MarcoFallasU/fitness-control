@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db/client';
@@ -39,7 +40,7 @@ export async function destroySession(): Promise<void> {
   store.delete(COOKIE_NAME);
 }
 
-export async function getCurrentUser(): Promise<User | null> {
+export const getCurrentUser = cache(async (): Promise<User | null> => {
   const store = await cookies();
   const token = store.get(COOKIE_NAME)?.value;
   if (!token) return null;
@@ -58,4 +59,4 @@ export async function getCurrentUser(): Promise<User | null> {
     return null;
   }
   return toPublicUser(row.user);
-}
+});
