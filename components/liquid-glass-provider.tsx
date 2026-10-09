@@ -1,12 +1,16 @@
 'use client';
 import { useEffect } from 'react';
 import { attachRefraction } from '@/lib/liquid-glass/refraction';
+import { usePreferences } from '@/lib/preferences';
 
 // Surfaces that get edge refraction. Nested glass is skipped (never nest refracting glass).
 const SELECTOR = '.glass, .glass-strong, .glass-nav';
 
 export function LiquidGlassProvider() {
+    const { reduceEffects } = usePreferences();
     useEffect(() => {
+        if (reduceEffects)
+            return;
         const attached = new Map<HTMLElement, () => void>();
         const sync = () => {
             document.querySelectorAll<HTMLElement>(SELECTOR).forEach((el) => {
@@ -34,6 +38,6 @@ export function LiquidGlassProvider() {
             attached.forEach((detach) => detach());
             attached.clear();
         };
-    }, []);
+    }, [reduceEffects]);
     return null;
 }

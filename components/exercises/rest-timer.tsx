@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { Pause, Play, RotateCcw } from 'lucide-react';
+import { getPreferences } from '@/lib/preferences';
 
 const PRESETS = [60, 90, 120, 180];
 
@@ -20,6 +21,11 @@ export function RestTimer() {
     const baseMs = useRef(0);
     const notified = useRef(false);
 
+    // Apply the saved default after mount (reading localStorage during render would break hydration).
+    useEffect(() => {
+        setTarget(getPreferences().restSeconds);
+    }, []);
+
     useEffect(() => {
         if (!running)
             return;
@@ -33,7 +39,8 @@ export function RestTimer() {
     useEffect(() => {
         if (reached && running && !notified.current) {
             notified.current = true;
-            navigator.vibrate?.([200, 100, 200]);
+            if (getPreferences().vibrate)
+                navigator.vibrate?.([200, 100, 200]);
         }
     }, [reached, running]);
 

@@ -361,3 +361,36 @@
 .animate-marquee {
   animation: marquee 22s linear infinite;
 }
+
+/* Liquid Glass — Fusión loader. Two bubbles merge through the #lg-goo SVG filter (see components/fusion-loader.tsx). */
+.lg-fusion {
+  position: relative;
+  width: 160px;
+  height: 90px;
+  filter: url(#lg-goo);
+}
+
+.lg-fusion span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  margin: -17px;
+  border-radius: 50%;
+  background: #fff;
+  --r: 34px;
+  animation: lg-fuse 1.96s cubic-bezier(0.55, 0, 0.35, 1) infinite;
+}
+
+.lg-fusion span:nth-child(1) { --dir: -1; }
+.lg-fusion span:nth-child(2) { --dir: 1; }
+
+@keyframes lg-fuse {
+  0%, 100% { transform: translateX(calc(var(--r) * var(--dir))) scale(1); }
+  42%, 58% { transform: translateX(0) scale(1.12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-fusion span { animation-duration: 4s; }
+}

@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
-import { verifyPassword } from '@/lib/auth/password';
+import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import type { User } from '@/lib/types';
 
 function toPublicUser(row: typeof users.$inferSelect): User {
@@ -32,4 +32,19 @@ export async function getAllUsers(): Promise<User[]> {
 export async function getUser(userId: string): Promise<User | undefined> {
     const rows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     return rows[0] ? toPublicUser(rows[0]) : undefined;
+}
+
+export async function updateProfile(userId: string, data: { displayName: string; color: string }): Promise<User | undefined> {
+    await db.update(users).set({ displayName: data.displayName, color: data.color }).where(eq(users.id, userId));
+    return getUser(userId);
+}
+
+/** Returns false when the current password does not match. */
+export async function changePassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
+    const rows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const row = rows[0];
+    if (!row || !(await verifyPassword(currentPassword, row.passwordHash)))
+        return false;
+    await db.update(users).set({ passwordHash: await hashPassword(newPassword) }).where(eq(users.id, userId));
+    return true;
 }

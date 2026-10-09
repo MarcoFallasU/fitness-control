@@ -1,7 +1,7 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Ruler, Dumbbell, Flame, LogOut, } from 'lucide-react';
+import { LayoutDashboard, Ruler, Dumbbell, Flame, LogOut, Settings, } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { logoutAction } from '@/app/(app)/actions';
@@ -61,6 +61,10 @@ export function AppShell({ children }: {
               <p className="truncate text-xs text-sidebar-foreground/50">@{user.username}</p>
             </div>
           </div>
+          <Link href="/settings" className="mb-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+            <Settings className="size-4"/>
+            Configuración
+          </Link>
           <form action={logoutAction}>
             <SubmitButton className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
               <LogOut className="size-4"/>
@@ -97,6 +101,10 @@ export function AppShell({ children }: {
                 <p className="truncate text-xs text-sidebar-foreground/50">@{user.username}</p>
               </div>
             </div>
+            <Link href="/settings" onClick={() => setOpen(false)} className="flex w-full items-center gap-2 rounded-xl px-4 py-3 text-sidebar-foreground/70 hover:bg-sidebar-accent">
+              <Settings className="size-4"/>
+              Configuración
+            </Link>
             <form action={logoutAction}>
               <SubmitButton className="flex w-full items-center gap-2 rounded-xl px-4 py-3 text-sidebar-foreground/70 hover:bg-sidebar-accent">
                 <LogOut className="size-4"/>
