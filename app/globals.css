@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-heading: var(--font-manrope), system-ui, sans-serif;
-  --font-sans: var(--font-manrope), system-ui, sans-serif;
+  --font-heading: var(--font-jakarta), system-ui, sans-serif;
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
   --font-mono: var(--font-roboto-mono), ui-monospace, monospace;
 
   --color-light: var(--light);
@@ -56,9 +56,38 @@
 }
 
 
+@layer base {
+  html {
+    background-color: #1b2a6b;
+  }
+}
+
 :root {
-  /* Gymbros glassmorphism system — frosted panels floating over a dark gradient with soft glow blobs */
-  --white:          #f3f5f7;
+  /* Liquid Glass — translucent material with edge refraction over a rich colored backdrop */
+  --lg-text-shadow:   0 1px 6px rgba(0, 0, 0, 0.3);
+  --lg-text-shadow-strong: 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 12px rgba(0, 0, 0, 0.25);
+  --lg-fill:          rgba(255, 255, 255, 0.04);
+  --lg-fill-raised:   rgba(255, 255, 255, 0.16);
+  --lg-fill-active:   rgba(255, 255, 255, 0.26);
+  --lg-fill-accept:   rgba(90, 210, 130, 0.38);
+  --lg-fill-danger:   rgba(255, 80, 80, 0.35);
+  --lg-track-on:      rgba(90, 210, 130, 0.7);
+  --lg-track-off:     rgba(255, 255, 255, 0.14);
+  --lg-border-color:  rgba(255, 255, 255, 0.28);
+  --lg-border:        1px solid var(--lg-border-color);
+  --lg-divider:       1px solid rgba(255, 255, 255, 0.18);
+  --lg-backdrop:        blur(3px) saturate(170%) invert(0.3);
+  --lg-backdrop-strong: blur(10px) saturate(170%) invert(0.3);
+  --lg-rim:
+    inset 1.5px 1.5px 1px rgba(255, 255, 255, 0.75),
+    inset -1px -1px 1px rgba(255, 255, 255, 0.35),
+    inset 0 0 18px rgba(255, 255, 255, 0.18);
+  --lg-drop:          0 10px 30px rgba(0, 0, 0, 0.12);
+  --lg-shadow:        var(--lg-rim), var(--lg-drop);
+  --lg-active-shadow: inset 1px 1px 1px rgba(255, 255, 255, 0.75), 0 4px 12px rgba(0, 0, 0, 0.12);
+
+  /* Data colors (charts) */
+  --white:          #ffffff;
   --ink:            #14150f;
   --yellow:         #fabc00;
   --yellow-dim:     #c99500;
@@ -67,94 +96,55 @@
   --blue-dim:       #2952c7;
   --blue-hover:     #6699ff;
   --lime:           #8fe0a8;
-  --coral:          #e0524a;
-  --ink-90:         #1c1f26;
-  --ink-70:         #2a2e37;
-  --ink-40:         #6b6f78;
-  --ink-20:         #9ca0a8;
-  --platinum:       #e9ecef;
-  --alabaster-grey: #dee2e6;
-  --pale-slate:     #ced4da;
-  --canvas-start:   #0b0f1a;
-  --canvas-end:     #05070c;
-  --glass-bg:       rgba(255, 255, 255, 0.06);
-  --glass-bg-strong: rgba(255, 255, 255, 0.1);
-  --glass-border:   rgba(255, 255, 255, 0.14);
-  --shadow-card:    0 8px 30px rgba(0, 0, 0, 0.35);
-  --shadow-pop:     0 20px 50px rgba(0, 0, 0, 0.45);
-
+  --coral:          #ff7a7a;
+  --glass-bg:       var(--lg-fill);
+  --glass-bg-strong: var(--lg-fill-raised);
+  --glass-border:   rgba(255, 255, 255, 0.28);
+  --shadow-card:    var(--lg-drop);
+  --shadow-pop:     0 20px 50px rgba(0, 0, 0, 0.35);
 
   --light:                      var(--white);
   --dark:                       var(--ink);
-  --brand:                      var(--yellow);
-  --brand-foreground:           var(--ink);
+  --brand:                      #ffffff;
+  --brand-foreground:           #ffffff;
 
-  --background:                 var(--canvas-start);
+  --background:                 transparent;
   --foreground:                 var(--white);
-  --card:                       var(--glass-bg);
+  --card:                       var(--lg-fill);
   --card-foreground:            var(--white);
-  --popover:                    var(--glass-bg-strong);
+  --popover:                    var(--lg-fill-raised);
   --popover-foreground:         var(--white);
-  --primary:                    var(--yellow);
-  --primary-foreground:         var(--ink);
-  --secondary:                  var(--blue);
-  --secondary-foreground:       var(--white);
-  --muted:                      rgba(255, 255, 255, 0.05);
-  --muted-foreground:           rgba(255, 255, 255, 0.55);
-  --accent:                     var(--yellow);
-  --accent-foreground:          var(--ink);
+  --primary:                    #ffffff;
+  --primary-foreground:         #ffffff;
+  --secondary:                  var(--lime);
+  --secondary-foreground:       #ffffff;
+  --muted:                      rgba(255, 255, 255, 0.1);
+  --muted-foreground:           rgba(255, 255, 255, 0.8);
+  --accent:                     #ffffff;
+  --accent-foreground:          #ffffff;
   --destructive:                var(--coral);
   --border:                     var(--glass-border);
   --input:                      var(--glass-border);
-  --ring:                       var(--yellow);
+  --ring:                       rgba(255, 255, 255, 0.7);
   --chart-1:                    var(--yellow);
   --chart-2:                    var(--blue);
   --chart-3:                    var(--blue-dim);
   --chart-4:                    var(--lime);
   --chart-5:                    var(--coral);
-  --radius:                     18px;
-  --sidebar:                    var(--glass-bg);
+  --radius:                     26px;
+  --sidebar:                    var(--lg-fill);
   --sidebar-foreground:         var(--white);
-  --sidebar-primary:            rgba(255, 255, 255, 0.12);
+  --sidebar-primary:            var(--lg-fill-active);
   --sidebar-primary-foreground: var(--white);
-  --sidebar-accent:             rgba(255, 255, 255, 0.08);
+  --sidebar-accent:             rgba(255, 255, 255, 0.14);
   --sidebar-accent-foreground:  var(--white);
   --sidebar-border:             var(--glass-border);
-  --sidebar-ring:               var(--yellow);
+  --sidebar-ring:               rgba(255, 255, 255, 0.7);
 }
 
+/* Glass has no light/dark variants: the material is always white-on-colour. */
 .dark {
-  --background:                 var(--canvas-start);
-  --foreground:                 var(--white);
-  --card:                       var(--glass-bg);
-  --card-foreground:            var(--white);
-  --popover:                    var(--glass-bg-strong);
-  --popover-foreground:         var(--white);
-  --primary:                    var(--yellow);
-  --primary-foreground:         var(--ink);
-  --secondary:                  var(--blue);
-  --secondary-foreground:       var(--white);
-  --muted:                      rgba(255, 255, 255, 0.05);
-  --muted-foreground:           rgba(255, 255, 255, 0.55);
-  --accent:                     var(--yellow);
-  --accent-foreground:          var(--ink);
-  --destructive:                var(--coral);
-  --border:                     var(--glass-border);
-  --input:                      var(--glass-border);
-  --ring:                       var(--yellow);
-  --chart-1:                    var(--yellow);
-  --chart-2:                    var(--blue);
-  --chart-3:                    var(--blue-dim);
-  --chart-4:                    var(--lime);
-  --chart-5:                    var(--coral);
-  --sidebar:                    var(--glass-bg);
-  --sidebar-foreground:         var(--white);
-  --sidebar-primary:            rgba(255, 255, 255, 0.12);
-  --sidebar-primary-foreground: var(--white);
-  --sidebar-accent:             rgba(255, 255, 255, 0.08);
-  --sidebar-accent-foreground:  var(--white);
-  --sidebar-border:             var(--glass-border);
-  --sidebar-ring:               var(--yellow);
+  color-scheme: dark;
 }
 
 @layer base {
@@ -163,17 +153,41 @@
   }
   body {
     @apply text-foreground;
-    background-color: var(--canvas-start);
-    background-image:
-      radial-gradient(700px circle at -5% -10%, color-mix(in srgb, var(--yellow) 20%, transparent), transparent 60%),
-      radial-gradient(750px circle at 105% 15%, color-mix(in srgb, var(--blue) 18%, transparent), transparent 60%),
-      linear-gradient(160deg, var(--canvas-start), var(--canvas-end) 60%);
-    background-repeat: no-repeat;
     min-height: 100vh;
+    text-shadow: var(--lg-text-shadow);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Colourful photographic-style backdrop — glass is invisible on flat backgrounds */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: #1b2a6b;
+    background-image:
+      radial-gradient(900px circle at 8% 0%, rgba(255, 95, 162, 0.55), transparent 60%),
+      radial-gradient(800px circle at 100% 8%, rgba(58, 208, 255, 0.5), transparent 60%),
+      radial-gradient(900px circle at 85% 100%, rgba(255, 179, 71, 0.5), transparent 60%),
+      radial-gradient(800px circle at 0% 95%, rgba(123, 92, 255, 0.6), transparent 60%),
+      linear-gradient(160deg, #1b2a6b, #3a1d6e 55%, #12395f);
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: rgba(255, 255, 255, 0.8);
   }
   html {
     @apply font-sans;
   }
+}
+
+/* Solid-colour utilities used across the app become raised glass fills */
+.bg-brand,
+.bg-primary,
+.bg-accent,
+.bg-secondary {
+  background-color: var(--lg-fill-active);
+  box-shadow: var(--lg-active-shadow);
 }
 
 @layer utilities {
@@ -182,41 +196,39 @@
     letter-spacing: -0.01em;
   }
 
-  .glass {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid var(--glass-border);
-  }
-
-  .glass-strong {
-    background: var(--glass-bg-strong);
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
-    border: 1px solid var(--glass-border);
-  }
-
+  .glass,
+  .glass-strong,
   .glass-nav {
-    background: rgba(10, 12, 18, 0.62);
-    backdrop-filter: blur(28px) saturate(200%) brightness(1.08);
-    -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.08);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.35),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.05),
-      inset 0 -12px 20px -12px rgba(255, 255, 255, 0.1),
-      0 12px 36px rgba(0, 0, 0, 0.55);
+    background: var(--lg-fill);
+    -webkit-backdrop-filter: var(--lg-backdrop);
+    backdrop-filter: var(--lg-backdrop);
+    border: var(--lg-border);
+    box-shadow: var(--lg-shadow);
     isolation: isolate;
   }
 
-  .glass-nav::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.03) 30%, rgba(255, 255, 255, 0) 55%, rgba(255, 255, 255, 0.08) 100%);
-    mix-blend-mode: overlay;
+  .glass-strong {
+    background: var(--lg-fill-raised);
+    -webkit-backdrop-filter: var(--lg-backdrop-strong);
+    backdrop-filter: var(--lg-backdrop-strong);
+  }
+
+  /* Never nest a refracting glass inside another */
+  .glass :is(.glass, .glass-strong, .glass-nav),
+  .glass-strong :is(.glass, .glass-strong, .glass-nav),
+  .glass-nav :is(.glass, .glass-strong, .glass-nav) {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: inset 1px 1px 1px rgba(255, 255, 255, 0.6);
+  }
+
+  .lg-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-shadow: var(--lg-text-shadow-strong);
   }
 
   .session-sheet {

@@ -22,7 +22,7 @@ export function Modal({ title, eyebrow, onClose, children, size = 'md' }: ModalP
         };
     }, [onClose]);
     return (<div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden/>
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} aria-hidden/>
       <div role="dialog" aria-modal="true" className={`glass-strong animate-rise relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl text-card-foreground shadow-[var(--shadow-pop)] sm:rounded-3xl ${size === 'lg' ? 'sm:max-w-2xl' : 'sm:max-w-md'}`}>
         <header className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>

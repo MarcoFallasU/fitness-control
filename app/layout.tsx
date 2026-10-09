@@ -1,11 +1,12 @@
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata, Viewport } from 'next';
-import { Manrope, Roboto_Mono } from 'next/font/google';
+import { Plus_Jakarta_Sans, Roboto_Mono } from 'next/font/google';
+import { LiquidGlassProvider } from '@/components/liquid-glass-provider';
 import { PwaRegister } from '@/components/pwa-register';
 import './globals.css';
-const manrope = Manrope({
-    variable: '--font-manrope',
-    weight: ['500', '600', '700', '800'],
+const jakarta = Plus_Jakarta_Sans({
+    variable: '--font-jakarta',
+    weight: ['300', '400', '500', '600', '700', '800'],
     subsets: ['latin'],
 });
 const robotoMono = Roboto_Mono({
@@ -33,17 +34,18 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-    themeColor: '#fabc00',
+    themeColor: '#1b2a6b',
 };
 export default function RootLayout({ children, }: Readonly<{
     children: React.ReactNode;
 }>) {
-    return (<html lang="es" className={`${manrope.variable} ${robotoMono.variable} bg-background`}>
+    return (<html lang="es" className={`${jakarta.variable} ${robotoMono.variable} bg-background`}>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes"/>
       </head>
       <body className="font-sans antialiased">
         {children}
+        <LiquidGlassProvider/>
         <PwaRegister/>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

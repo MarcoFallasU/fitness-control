@@ -40,7 +40,7 @@ export function AppShell({ children }: {
           </Link>
           <NavLinks />
         </div>
-        <div className="glass rounded-2xl p-3">
+        <div className="rounded-2xl bg-white/10 p-3 shadow-[inset_1px_1px_1px_rgba(255,255,255,0.6)]">
           <div className="mb-3 flex items-center gap-3">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-full font-heading font-bold text-ink" style={{ backgroundColor: user.color }}>
               {user.displayName[0]}
@@ -98,11 +98,11 @@ export function AppShell({ children }: {
 
         <main className="min-w-0 flex-1 pb-28 lg:pb-0">{children}</main>
 
-        <nav className="glass-nav fixed inset-x-4 bottom-4 z-40 flex items-center justify-around rounded-2xl px-2 py-2 lg:hidden">
+        <nav className="glass-nav fixed inset-x-4 bottom-4 z-40 flex items-center justify-around rounded-full px-2 py-2 lg:hidden">
           {NAV.map((item) => {
                 const active = pathname === item.href;
                 const Icon = item.icon;
-                return (<Link key={item.href} href={item.href} className={`flex flex-1 flex-col items-center gap-1 rounded-xl py-2 text-[11px] font-semibold transition-colors ${active ? 'text-brand' : 'text-sidebar-foreground/50'}`}>
+                return (<Link key={item.href} href={item.href} className={`flex flex-1 flex-col items-center gap-1 rounded-full py-2 text-[11px] font-semibold transition-colors ${active ? 'bg-[var(--lg-fill-active)] text-white shadow-[var(--lg-active-shadow)]' : 'text-sidebar-foreground/70'}`}>
               <Icon className="size-5"/>
               {item.label}
             </Link>);
