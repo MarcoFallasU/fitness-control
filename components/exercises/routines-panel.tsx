@@ -1,10 +1,11 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, Pencil, Plus, Trash2, Play, History, Dumbbell, Flag, Activity, UserPlus, Check, X, } from 'lucide-react';
+import { ChevronDown, Pencil, Plus, Trash2, Play, History, Share2, Dumbbell, Flag, Activity, UserPlus, Check, X, } from 'lucide-react';
 import { startTrackingAction, endTrackingAction, removeExerciseAction, createRoutineGroupAction, updateRoutineGroupAction, deleteRoutineGroupAction, } from '@/app/(app)/exercises/actions';
 import type { Routine, Exercise, RoutineGroup, RoutineExecution, User } from '@/lib/types';
 import { formatLongDate } from '@/lib/format';
+import { encodeSharedRoutine } from '@/lib/share-routine';
 import { RoutineForm } from './routine-form';
 import { ExerciseForm } from './exercise-form';
 interface RoutinesPanelProps {
@@ -20,6 +21,24 @@ interface RoutinesPanelProps {
 const NO_GROUP = '__none__';
 export function RoutinesPanel({ userId, other, routines, groups, executions, activeExecutions, otherActiveExecutions, newRoutineSignal }: RoutinesPanelProps) {
     const router = useRouter();
+    const [sharedId, setSharedId] = useState<string | null>(null);
+    async function shareRoutine(routine: Routine) {
+        const url = `${window.location.origin}/share/routine?d=${encodeSharedRoutine(routine)}`;
+        try {
+            // Native share sheet on mobile, clipboard everywhere else.
+            if (typeof navigator.share === 'function' && window.matchMedia('(pointer: coarse)').matches) {
+                await navigator.share({ title: routine.name, text: `Rutina "${routine.name}" en Gymbros`, url });
+            }
+            else {
+                await navigator.clipboard.writeText(url);
+            }
+            setSharedId(routine.id);
+            setTimeout(() => setSharedId((id) => (id === routine.id ? null : id)), 2000);
+        }
+        catch {
+            // User dismissed the share sheet or clipboard is unavailable.
+        }
+    }
     const [expanded, setExpanded] = useState<string | null>(null);
     const [routineForm, setRoutineForm] = useState<{
         routine?: Routine;
@@ -103,6 +122,10 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
             <button onClick={() => setRoutineForm({ routine, executionCount: completed.length })} className=" text-card-foreground inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-muted">
               <Pencil className="size-4"/>
               Editar
+            </button>
+            <button onClick={() => shareRoutine(routine)} className="text-card-foreground inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-muted">
+              {sharedId === routine.id ? <Check className="size-4"/> : <Share2 className="size-4"/>}
+              {sharedId === routine.id ? 'Enlace copiado' : 'Compartir'}
             </button>
           </div>
         </div>

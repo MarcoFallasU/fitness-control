@@ -3,7 +3,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { loginAction } from '@/app/login/actions';
-export function LoginForm() {
+export function LoginForm({ next }: {
+    next?: string;
+}) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -12,7 +14,7 @@ export function LoginForm() {
         e.preventDefault();
         setError('');
         setPending(true);
-        const result = await loginAction(username, password);
+        const result = await loginAction(username, password, next);
         setPending(false);
         if (result?.error) {
             setError(result.error);

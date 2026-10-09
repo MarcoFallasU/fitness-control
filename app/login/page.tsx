@@ -3,10 +3,13 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
 import { LoginForm } from '@/components/login-form';
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: {
+    searchParams: Promise<{ next?: string }>;
+}) {
+    const { next } = await searchParams;
     const user = await getCurrentUser();
     if (user)
-        redirect('/dashboard');
+        redirect(next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard');
     return (<main className="flex min-h-screen items-center justify-center px-5 py-10">
       <div className="flex w-full max-w-4xl items-center gap-16">
 
@@ -22,7 +25,7 @@ export default async function LoginPage() {
           </p>
         </section>
 
-        <LoginForm />
+        <LoginForm next={next}/>
       </div>
     </main>);
 }

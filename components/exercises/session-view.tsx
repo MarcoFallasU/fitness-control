@@ -5,6 +5,7 @@ import { ArrowLeft, Check, Flag, ArrowRight } from 'lucide-react';
 import { updateExecutionExercisesAction, finalizeExecutionAction } from '@/app/(app)/exercises/actions';
 import { computeExerciseVolume } from '@/lib/exercises-utils';
 import { usePartnerSync } from '@/lib/use-partner-sync';
+import { RestTimer } from '@/components/exercises/rest-timer';
 import type { RoutineExecution, ExerciseExecution, SetDetail, User } from '@/lib/types';
 
 interface SessionViewProps {
@@ -108,10 +109,28 @@ export function SessionView({ execution, me }: SessionViewProps) {
         router.push('/exercises');
     }
 
+    // Start time lives in localStorage (the DB only stores the date), so a reload does not reset the clock.
+    const startKey = `session-start:${execution.id}`;
+    useEffect(() => {
+        try {
+            if (!localStorage.getItem(startKey))
+                localStorage.setItem(startKey, String(Date.now()));
+        }
+        catch { }
+    }, [startKey]);
+
     async function handleFinish() {
         setFinishing(true);
+        let seconds: number | undefined;
+        try {
+            const started = parseInt(localStorage.getItem(startKey) ?? '', 10);
+            if (!isNaN(started))
+                seconds = Math.max(0, Math.round((Date.now() - started) / 1000));
+            localStorage.removeItem(startKey);
+        }
+        catch { }
         await finalizeExecutionAction(execution.id, exercisesRef.current);
-        router.push('/exercises');
+        router.push(`/session/${execution.id}/summary${seconds !== undefined ? `?t=${seconds}` : ''}`);
     }
 
     // Draggable peek sheet
@@ -302,6 +321,8 @@ export function SessionView({ execution, me }: SessionViewProps) {
           <p className="mt-3.5 text-xs text-muted-foreground">
             Volumen de esta serie: <span className="font-bold text-foreground">{volume.toLocaleString('es')} kg</span>
           </p>
+
+          <RestTimer/>
 
           <div className="mt-4 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {exercises.map((ex, i) => (<button key={ex.exerciseId} onClick={() => selectExercise(i)} className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-2 text-xs font-bold ${i === index
