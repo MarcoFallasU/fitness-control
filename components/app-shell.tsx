@@ -2,10 +2,11 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { LayoutDashboard, Ruler, Dumbbell, Flame, LogOut, } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { logoutAction } from '@/app/(app)/actions';
 import { SubmitButton } from '@/components/ui/submit-button';
+import { LiquidBubble, useLiquidBubble } from '@/components/ui/liquid-bubble';
 const NAV = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/measurements', label: 'Medidas', icon: Ruler },
@@ -18,13 +19,20 @@ export function AppShell({ children }: {
     const { user } = useAuth();
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
-    const NavLinks = () => (<nav className="flex flex-col gap-1">
+    const activeHref = NAV.find((n) => n.href === pathname)?.href ?? null;
+    const sideNavRef = useRef<HTMLElement>(null);
+    const bottomNavRef = useRef<HTMLElement>(null);
+    const sideBubble = useLiquidBubble(sideNavRef, activeHref, 'y');
+    const bottomBubble = useLiquidBubble(bottomNavRef, activeHref, 'x');
+    // Rendered inline (not as a component) so the nav keeps its identity and the bubble can animate between items.
+    const navLinks = (<nav ref={sideNavRef} className="relative flex flex-col gap-1">
+      <LiquidBubble box={sideBubble} radius={16}/>
       {NAV.map((item) => {
             const active = pathname === item.href;
             const Icon = item.icon;
-            return (<Link key={item.href} href={item.href} onClick={() => setOpen(false)} className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold tracking-wide transition-colors ${active
-                    ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                    : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}>
+            return (<Link key={item.href} href={item.href} data-lg-item={item.href} onClick={() => setOpen(false)} className={`group relative flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold tracking-wide transition-colors ${active
+                    ? 'text-sidebar-primary-foreground'
+                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}>
             <Icon className="size-5 shrink-0"/>
             {item.label}
           </Link>);
@@ -39,7 +47,7 @@ export function AppShell({ children }: {
               Gymbros
             </span>
           </Link>
-          <NavLinks />
+          {navLinks}
         </div>
         <div className="rounded-2xl bg-white/10 p-3 shadow-[inset_1px_1px_1px_rgba(255,255,255,0.6)]">
           <div className="mb-3 flex items-center gap-3">
@@ -99,11 +107,12 @@ export function AppShell({ children }: {
 
         <main className="min-w-0 flex-1 pb-28 lg:pb-0">{children}</main>
 
-        <nav className="glass-nav fixed inset-x-4 bottom-4 z-40 flex items-center justify-around rounded-full px-2 py-2 lg:hidden">
+        <nav ref={bottomNavRef} className="glass-nav fixed inset-x-4 bottom-4 z-40 flex items-center justify-around rounded-full px-2 py-2 lg:hidden">
+          <LiquidBubble box={bottomBubble}/>
           {NAV.map((item) => {
                 const active = pathname === item.href;
                 const Icon = item.icon;
-                return (<Link key={item.href} href={item.href} className={`flex flex-1 flex-col items-center gap-1 rounded-full py-2 text-[11px] font-semibold transition-colors ${active ? 'bg-[var(--lg-fill-active)] text-white shadow-[var(--lg-active-shadow)]' : 'text-sidebar-foreground/70'}`}>
+                return (<Link key={item.href} href={item.href} data-lg-item={item.href} className={`relative flex flex-1 flex-col items-center gap-1 rounded-full py-2 text-[11px] font-semibold transition-colors ${active ? 'text-white' : 'text-sidebar-foreground/70'}`}>
               <Icon className="size-5"/>
               {item.label}
             </Link>);

@@ -7,6 +7,7 @@ import { computeExerciseVolume } from '@/lib/exercises-utils';
 import { usePartnerSync } from '@/lib/use-partner-sync';
 import { RestTimer } from '@/components/exercises/rest-timer';
 import { Spinner } from '@/components/ui/spinner';
+import { LiquidBubble, useLiquidBubble } from '@/components/ui/liquid-bubble';
 import { useBusy } from '@/lib/use-busy';
 import type { RoutineExecution, ExerciseExecution, SetDetail, User } from '@/lib/types';
 
@@ -31,6 +32,8 @@ export function SessionView({ execution, me }: SessionViewProps) {
     const [mode, setMode] = useState<Mode>('simple');
     const [finishing, setFinishing] = useState(false);
     const { run, isBusy } = useBusy();
+    const modeRef = useRef<HTMLDivElement>(null);
+    const modeBubble = useLiquidBubble(modeRef, mode);
 
     const { partner, sendUpdate } = usePartnerSync(execution.routineId, me);
     useEffect(() => {
@@ -274,11 +277,12 @@ export function SessionView({ execution, me }: SessionViewProps) {
               </button>)}
           </div>
 
-          <div className="mt-4 flex rounded-xl border border-border bg-white/[0.06] p-[3px]">
-            <button onClick={() => setMode('simple')} className={`flex-1 rounded-lg py-2 text-xs font-bold ${mode === 'simple' ? 'bg-brand text-brand-foreground' : 'text-muted-foreground'}`}>
+          <div ref={modeRef} className="relative mt-4 flex rounded-xl border border-border bg-white/[0.06] p-[3px]">
+            <LiquidBubble box={modeBubble} radius={9}/>
+            <button data-lg-item="simple" onClick={() => setMode('simple')} className={`relative flex-1 rounded-lg py-2 text-xs font-bold ${mode === 'simple' ? 'text-white' : 'text-muted-foreground'}`}>
               Simple
             </button>
-            <button onClick={() => setMode('advanced')} className={`flex-1 rounded-lg py-2 text-xs font-bold ${mode === 'advanced' ? 'bg-brand text-brand-foreground' : 'text-muted-foreground'}`}>
+            <button data-lg-item="advanced" onClick={() => setMode('advanced')} className={`relative flex-1 rounded-lg py-2 text-xs font-bold ${mode === 'advanced' ? 'text-white' : 'text-muted-foreground'}`}>
               Avanzado
             </button>
           </div>

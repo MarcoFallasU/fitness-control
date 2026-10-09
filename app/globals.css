@@ -67,6 +67,7 @@
   --lg-text-shadow:   0 1px 6px rgba(0, 0, 0, 0.3);
   --lg-text-shadow-strong: 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 12px rgba(0, 0, 0, 0.25);
   --lg-fill:          rgba(255, 255, 255, 0.04);
+  --lg-fill-strong:   rgba(255, 255, 255, 0.16);
   --lg-fill-raised:   rgba(255, 255, 255, 0.16);
   --lg-fill-active:   rgba(255, 255, 255, 0.26);
   --lg-fill-accept:   rgba(90, 210, 130, 0.38);
@@ -142,9 +143,28 @@
   --sidebar-ring:               rgba(255, 255, 255, 0.7);
 }
 
-/* Glass has no light/dark variants: the material is always white-on-colour. */
-.dark {
+/* Dark theme: smoky fill, dimmer rims, deeper shadow. Applied via data-theme="dark" on <html>. */
+[data-theme='dark'] {
   color-scheme: dark;
+  --lg-fill:          rgba(18, 22, 30, 0.38);
+  --lg-fill-strong:   rgba(18, 22, 30, 0.55);
+  --lg-fill-raised:   rgba(255, 255, 255, 0.08);
+  --lg-fill-active:   rgba(255, 255, 255, 0.14);
+  --lg-fill-accept:   rgba(60, 190, 110, 0.42);
+  --lg-fill-danger:   rgba(230, 60, 60, 0.42);
+  --lg-border-color:  rgba(255, 255, 255, 0.14);
+  --lg-divider:       1px solid rgba(255, 255, 255, 0.1);
+  --lg-backdrop:        blur(3px) saturate(150%) invert(0.3) brightness(0.7);
+  --lg-backdrop-strong: blur(10px) saturate(150%) invert(0.3) brightness(0.7);
+  --lg-rim:
+    inset 1.5px 1.5px 1px rgba(255, 255, 255, 0.38),
+    inset -1px -1px 1px rgba(255, 255, 255, 0.14),
+    inset 0 0 18px rgba(255, 255, 255, 0.06);
+  --lg-drop:          0 12px 32px rgba(0, 0, 0, 0.35);
+  --lg-active-shadow: inset 1px 1px 1px rgba(255, 255, 255, 0.4), 0 4px 12px rgba(0, 0, 0, 0.25);
+  --glass-border:     rgba(255, 255, 255, 0.14);
+  --muted:            rgba(255, 255, 255, 0.08);
+  --sidebar-accent:   rgba(255, 255, 255, 0.1);
 }
 
 @layer base {
@@ -208,7 +228,7 @@
   }
 
   .glass-strong {
-    background: var(--lg-fill-raised);
+    background: var(--lg-fill-strong);
     -webkit-backdrop-filter: var(--lg-backdrop-strong);
     backdrop-filter: var(--lg-backdrop-strong);
   }

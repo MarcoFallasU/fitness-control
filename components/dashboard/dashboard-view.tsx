@@ -88,7 +88,6 @@ export function DashboardView({ displayName, measurements, executions, calories,
           <h1 className="font-heading text-4xl uppercase leading-[0.9] sm:text-5xl">
             Hola, {displayName}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">Tu progreso, en un vistazo.</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

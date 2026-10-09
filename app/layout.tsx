@@ -39,7 +39,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children, }: Readonly<{
     children: React.ReactNode;
 }>) {
-    return (<html lang="es" className={`${jakarta.variable} ${robotoMono.variable} bg-background`}>
+    return (<html lang="es" data-theme="dark" className={`${jakarta.variable} ${robotoMono.variable} bg-background`}>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes"/>
       </head>

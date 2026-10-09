@@ -69,9 +69,13 @@ export function makeDisplacementMap(W: number, H: number, r: number, bezel: numb
 }
 
 /** Attach refraction to one element. Returns a cleanup function. */
-export function attachRefraction(el: HTMLElement, { blur = 1, invert = 0.3, saturate = 170 }: { blur?: number; invert?: number; saturate?: number } = {}): () => void {
+export function attachRefraction(el: HTMLElement, { blur = 1, invert = 0.3, saturate, brightness }: { blur?: number; invert?: number; saturate?: number; brightness?: number } = {}): () => void {
     if (!el || !supportsRefraction())
         return () => { };
+    // Dark theme (data-theme="dark" on any ancestor) uses a dimmer, less saturated backdrop.
+    const dark = !!el.closest('[data-theme="dark"]');
+    saturate ??= dark ? 150 : 170;
+    brightness ??= dark ? 0.7 : 1.05;
     const id = 'lg-r' + seq++;
     const filter = document.createElementNS(NS, 'filter');
     filter.id = id;
@@ -100,7 +104,7 @@ export function attachRefraction(el: HTMLElement, { blur = 1, invert = 0.3, satu
         filter.innerHTML =
             `<feImage href="${makeDisplacementMap(w, h, r, bezel)}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="map"/>` +
                 `<feDisplacementMap in="SourceGraphic" in2="map" scale="${scale}" xChannelSelector="R" yChannelSelector="G"/>`;
-        el.style.backdropFilter = `blur(${blur}px) url(#${id}) saturate(${saturate}%) invert(${invert}) brightness(1.05)`;
+        el.style.backdropFilter = `blur(${blur}px) url(#${id}) saturate(${saturate}%) invert(${invert}) brightness(${brightness})`;
     };
 
     let t: ReturnType<typeof setTimeout>;

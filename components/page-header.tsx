@@ -2,10 +2,9 @@ interface PageHeaderProps {
     eyebrow: string;
     title: string;
     highlight?: string;
-    description?: string;
     action?: React.ReactNode;
 }
-export function PageHeader({ eyebrow, title, highlight, description, action, }: PageHeaderProps) {
+export function PageHeader({ eyebrow, title, highlight, action, }: PageHeaderProps) {
     return (<div className="px-5 pb-2 pt-8 sm:px-8 sm:pt-10 lg:px-12">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -16,9 +15,6 @@ export function PageHeader({ eyebrow, title, highlight, description, action, }: 
             {title}{' '}
             {highlight && <span className="text-brand">{highlight}</span>}
           </h1>
-          {description && (<p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
-              {description}
-            </p>)}
         </div>
         {action && <div className="shrink-0">{action}</div>}
       </div>

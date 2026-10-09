@@ -35,7 +35,7 @@ export function MeasurementsView({ entries }: MeasurementsViewProps) {
         setSelectedZones((prev) => prev.includes(zone) ? prev.filter((z) => z !== zone) : [...prev, zone]);
     }
     return (<div className="pb-16">
-      <PageHeader eyebrow="MEDIDAS" title="Medidas" highlight="corporales" description="Registra tus medidas cuando quieras y observa la evolución de cada zona en el tiempo." action={<button onClick={() => setFormOpen(true)} className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-3 font-heading text-base uppercase tracking-wide text-brand-foreground transition-transform hover:-translate-y-0.5">
+      <PageHeader eyebrow="MEDIDAS" title="Medidas" highlight="corporales" action={<button onClick={() => setFormOpen(true)} className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-3 font-heading text-base uppercase tracking-wide text-brand-foreground transition-transform hover:-translate-y-0.5">
             <Plus className="size-5"/>
             Nueva entrada
           </button>}/>

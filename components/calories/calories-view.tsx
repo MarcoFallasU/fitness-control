@@ -47,7 +47,7 @@ export function CaloriesView({ me, other, entries, otherEntries }: CaloriesViewP
     })), [entries]);
     const history = useMemo(() => [...entries].reverse().slice(0, 30), [entries]);
     return (<div className="pb-16">
-      <PageHeader eyebrow="NUTRICIÓN" title="Control" highlight="calórico" description="Registra tu consumo diario y analiza tus tendencias por semana, mes y año." action={<button onClick={() => setFormOpen(true)} className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-3 font-heading text-base uppercase tracking-wide text-brand-foreground transition-transform hover:-translate-y-0.5">
+      <PageHeader eyebrow="NUTRICIÓN" title="Control" highlight="calórico" action={<button onClick={() => setFormOpen(true)} className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-3 font-heading text-base uppercase tracking-wide text-brand-foreground transition-transform hover:-translate-y-0.5">
             {today ? <Pencil className="size-5"/> : <Plus className="size-5"/>}
             {today ? 'Editar hoy' : 'Registrar hoy'}
           </button>}/>

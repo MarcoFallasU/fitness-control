@@ -20,7 +20,7 @@ export function ExercisesView({ me, other, routines, groups, executions, activeE
     const [tab, setTab] = useState<Tab>('routines');
     const [newRoutineSignal, setNewRoutineSignal] = useState(0);
     return (<div className="pb-16">
-      <PageHeader eyebrow="ENTRENO" title="Rutinas y" highlight="ejercicios" description="Crea rutinas, registra cada ejecución y observa cómo crece el peso que mueves." action={tab === 'routines' ? (<button onClick={() => setNewRoutineSignal((s) => s + 1)} className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-3 font-heading text-base uppercase tracking-wide text-brand-foreground transition-transform hover:-translate-y-0.5">
+      <PageHeader eyebrow="ENTRENO" title="Rutinas y" highlight="ejercicios" action={tab === 'routines' ? (<button onClick={() => setNewRoutineSignal((s) => s + 1)} className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-3 font-heading text-base uppercase tracking-wide text-brand-foreground transition-transform hover:-translate-y-0.5">
               <Plus className="size-5"/>
               Nueva rutina
             </button>) : undefined}/>
