@@ -9,6 +9,7 @@ import { SectionCard } from '@/components/section-card';
 import { Spinner } from '@/components/ui/spinner';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { setPreferences, usePreferences } from '@/lib/preferences';
+import { WALLPAPERS, type WallpaperChoice } from '@/lib/wallpapers';
 
 const COLORS = ['#fabc00', '#3c78ff', '#8fe0a8', '#ff7a7a', '#c084fc', '#38bdf8', '#fb923c', '#f472b6'];
 const REST_OPTIONS: { label: string; value: number | null }[] = [
@@ -159,6 +160,30 @@ function PasswordSection() {
     </SectionCard>);
 }
 
+function WallpaperSection() {
+    const { wallpaper } = usePreferences();
+    const tiles: { id: WallpaperChoice; label: string }[] = [{ id: 'auto', label: 'Automático' }, ...WALLPAPERS];
+    return (<SectionCard title="Fondo de pantalla">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {tiles.map((t) => {
+            const selected = wallpaper === t.id;
+            return (<button key={t.id} type="button" aria-pressed={selected} onClick={() => setPreferences({ wallpaper: t.id })} className="flex flex-col gap-2 text-left">
+              <span className="relative block h-20 w-full overflow-hidden rounded-2xl border-2 transition-transform hover:scale-[1.03]" style={{ borderColor: selected ? '#fff' : 'rgba(255,255,255,0.2)' }}>
+                {t.id === 'auto' ? (<>
+                    <span className="absolute inset-0" style={{ backgroundImage: 'var(--wp-aurora)' }}/>
+                    <span className="absolute inset-0" style={{ backgroundImage: 'var(--wp-dawn)', clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}/>
+                  </>) : (<span className="absolute inset-0" style={{ backgroundImage: `var(--wp-${t.id})` }}/>)}
+                {selected && (<span className="absolute right-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-white text-ink">
+                    <Check className="size-3.5"/>
+                  </span>)}
+              </span>
+              <span className="text-xs font-bold">{t.label}</span>
+            </button>);
+        })}
+      </div>
+    </SectionCard>);
+}
+
 function PreferencesSection() {
     const prefs = usePreferences();
     return (<SectionCard title="Preferencias del dispositivo">
@@ -195,6 +220,7 @@ export function SettingsView() {
       <div className="mx-auto flex max-w-2xl flex-col gap-5 px-5 py-6 sm:px-8 lg:mx-0 lg:px-12">
         <ProfileSection/>
         <PasswordSection/>
+        <WallpaperSection/>
         <PreferencesSection/>
         <form action={logoutAction}>
           <SubmitButton className="inline-flex items-center gap-2 rounded-full border border-border bg-[var(--lg-fill-danger)] px-6 py-3 text-sm font-bold">

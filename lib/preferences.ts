@@ -1,5 +1,6 @@
 'use client';
 import { useSyncExternalStore } from 'react';
+import type { WallpaperChoice } from '@/lib/wallpapers';
 
 /** Per-device preferences, kept in localStorage (they are not tied to the account). */
 export interface Preferences {
@@ -8,9 +9,11 @@ export interface Preferences {
     vibrate: boolean;
     /** Turns off the edge-refraction effect on glass surfaces (lighter on old devices). */
     reduceEffects: boolean;
+    /** 'auto' follows the system theme; any other value is the user's pick and always wins. */
+    wallpaper: WallpaperChoice;
 }
 
-export const DEFAULT_PREFERENCES: Preferences = { restSeconds: 90, vibrate: true, reduceEffects: false };
+export const DEFAULT_PREFERENCES: Preferences = { restSeconds: 90, vibrate: true, reduceEffects: false, wallpaper: 'auto' };
 const KEY = 'gymbros:prefs';
 
 let cache = DEFAULT_PREFERENCES;
