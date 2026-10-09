@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { Dumbbell, Plus } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth/session';
 import { decodeSharedRoutine } from '@/lib/share-routine';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { importSharedRoutineAction } from './actions';
 
 export default async function SharedRoutinePage({ searchParams }: {
@@ -44,9 +45,9 @@ export default async function SharedRoutinePage({ searchParams }: {
         <form action={importSharedRoutineAction} className="mt-6 flex gap-2.5">
           <input type="hidden" name="d" value={d}/>
           <Link href="/exercises" className="flex items-center rounded-full border border-border px-5 text-sm font-bold text-muted-foreground">Cancelar</Link>
-          <button type="submit" className="bg-brand flex flex-1 items-center justify-center gap-2 rounded-full py-3.5 font-heading text-sm font-extrabold">
+          <SubmitButton className="bg-brand flex flex-1 items-center justify-center gap-2 rounded-full py-3.5 font-heading text-sm font-extrabold">
             <Plus className="size-4"/>Añadir a mis rutinas
-          </button>
+          </SubmitButton>
         </form>
       </div>
     </main>);

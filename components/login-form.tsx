@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { loginAction } from '@/app/login/actions';
+import { Spinner } from '@/components/ui/spinner';
 export function LoginForm({ next }: {
     next?: string;
 }) {
@@ -53,8 +54,9 @@ export function LoginForm({ next }: {
           </p>)}
 
         <button type="submit" disabled={pending} className="group mt-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-3.5 font-heading text-sm font-extrabold text-brand-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-60">
+          {pending && <Spinner/>}
           {pending ? 'Entrando…' : 'Entrar'}
-          <ArrowRight className="size-4 transition-transform group-hover:translate-x-1"/>
+          {!pending && <ArrowRight className="size-4 transition-transform group-hover:translate-x-1"/>}
         </button>
       </form>
     </section>);

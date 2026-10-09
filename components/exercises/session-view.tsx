@@ -6,6 +6,8 @@ import { updateExecutionExercisesAction, finalizeExecutionAction } from '@/app/(
 import { computeExerciseVolume } from '@/lib/exercises-utils';
 import { usePartnerSync } from '@/lib/use-partner-sync';
 import { RestTimer } from '@/components/exercises/rest-timer';
+import { Spinner } from '@/components/ui/spinner';
+import { useBusy } from '@/lib/use-busy';
 import type { RoutineExecution, ExerciseExecution, SetDetail, User } from '@/lib/types';
 
 interface SessionViewProps {
@@ -28,6 +30,7 @@ export function SessionView({ execution, me }: SessionViewProps) {
     const [index, setIndex] = useState(0);
     const [mode, setMode] = useState<Mode>('simple');
     const [finishing, setFinishing] = useState(false);
+    const { run, isBusy } = useBusy();
 
     const { partner, sendUpdate } = usePartnerSync(execution.routineId, me);
     useEffect(() => {
@@ -222,8 +225,8 @@ export function SessionView({ execution, me }: SessionViewProps) {
     return (<div className="relative min-h-screen pb-6">
       <div className="mx-auto flex max-w-lg flex-col px-5 pt-6 sm:px-8">
         <div className="flex items-center justify-between">
-          <button onClick={handleExit} className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-            <ArrowLeft className="size-4"/>
+          <button disabled={isBusy('exit')} onClick={() => run('exit', async () => { await handleExit(); return 'keep'; })} className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground disabled:opacity-70">
+            {isBusy('exit') ? <Spinner/> : <ArrowLeft className="size-4"/>}
             Salir
           </button>
           <span className="font-mono text-xs font-bold text-muted-foreground">
@@ -265,8 +268,8 @@ export function SessionView({ execution, me }: SessionViewProps) {
             <p className="mt-2 text-sm text-muted-foreground">
               Objetivo: {current.targetSets} × {current.targetReps} · {current.targetWeight} kg
             </p>
-            {current.done && (<button onClick={toggleDone} className="mt-2.5 flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold" style={{ background: 'rgba(143,224,168,.14)', borderColor: 'rgba(143,224,168,.4)', color: 'var(--lime)' }}>
-                <Check className="size-3.5"/>
+            {current.done && (<button disabled={isBusy('toggle')} onClick={() => run('toggle', toggleDone)} className="mt-2.5 disabled:opacity-70 flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold" style={{ background: 'rgba(143,224,168,.14)', borderColor: 'rgba(143,224,168,.4)', color: 'var(--lime)' }}>
+                {isBusy('toggle') ? <Spinner className="size-3.5"/> : <Check className="size-3.5"/>}
                 Completado · Toca para desmarcar
               </button>)}
           </div>
@@ -338,10 +341,10 @@ export function SessionView({ execution, me }: SessionViewProps) {
 
       {current && (<div className="mx-auto mt-6 flex max-w-lg gap-2.5 px-5 sm:px-8" style={{ paddingBottom: PEEK_OFFSET + 76 }}>
           <button onClick={handleFinish} disabled={finishing} className="shrink-0 rounded-2xl border border-border px-4 text-sm font-bold text-muted-foreground disabled:opacity-60">
-            <span className="flex items-center gap-1.5"><Flag className="size-4"/>Terminar</span>
+            <span className="flex items-center gap-1.5">{finishing ? <Spinner/> : <Flag className="size-4"/>}Terminar</span>
           </button>
-          <button onClick={goNext} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 font-heading text-sm font-extrabold text-brand-foreground">
-            Siguiente ejercicio <ArrowRight className="size-4"/>
+          <button disabled={isBusy('next')} onClick={() => run('next', goNext)} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 font-heading text-sm font-extrabold text-brand-foreground disabled:opacity-70">
+            Siguiente ejercicio {isBusy('next') ? <Spinner/> : <ArrowRight className="size-4"/>}
           </button>
         </div>)}
 

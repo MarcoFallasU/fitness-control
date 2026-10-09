@@ -1,4 +1,5 @@
 'use client';
+import { Spinner } from '@/components/ui/spinner';
 import { useState } from 'react';
 import { Modal } from '@/components/modal';
 import { setCaloriesAction } from '@/app/(app)/calories/actions';
@@ -42,7 +43,8 @@ export function CalorieForm({ userId, initialValue, onClose, onSaved }: CalorieF
           <button type="button" onClick={onClose} className="flex-1 rounded-md border border-border px-5 py-3 font-heading text-base uppercase tracking-wide transition-colors hover:bg-muted">
             Cancelar
           </button>
-          <button type="submit" disabled={saving} className="flex-1 rounded-md bg-brand px-5 py-3 font-heading text-base uppercase tracking-wide text-brand-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-60">
+          <button type="submit" disabled={saving} className="flex flex-1 items-center justify-center gap-2 rounded-md bg-brand px-5 py-3 font-heading text-base uppercase tracking-wide text-brand-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-60">
+            {saving && <Spinner/>}
             {saving ? 'Guardando…' : 'Guardar'}
           </button>
         </div>

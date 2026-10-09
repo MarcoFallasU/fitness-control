@@ -6,6 +6,8 @@ import { startTrackingAction, endTrackingAction, removeExerciseAction, createRou
 import type { Routine, Exercise, RoutineGroup, RoutineExecution, User } from '@/lib/types';
 import { formatLongDate } from '@/lib/format';
 import { encodeSharedRoutine } from '@/lib/share-routine';
+import { useBusy } from '@/lib/use-busy';
+import { Spinner } from '@/components/ui/spinner';
 import { RoutineForm } from './routine-form';
 import { ExerciseForm } from './exercise-form';
 interface RoutinesPanelProps {
@@ -21,6 +23,7 @@ interface RoutinesPanelProps {
 const NO_GROUP = '__none__';
 export function RoutinesPanel({ userId, other, routines, groups, executions, activeExecutions, otherActiveExecutions, newRoutineSignal }: RoutinesPanelProps) {
     const router = useRouter();
+    const { run, isBusy } = useBusy();
     const [sharedId, setSharedId] = useState<string | null>(null);
     async function shareRoutine(routine: Routine) {
         const url = `${window.location.origin}/share/routine?d=${encodeSharedRoutine(routine)}`;
@@ -105,14 +108,15 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
             <ChevronDown className={`ml-auto size-5 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`}/>
           </button>
           <div className="flex flex-wrap gap-2">
-            <button onClick={async () => {
+            <button disabled={isBusy(`start:${routine.id}`)} onClick={() => run(`start:${routine.id}`, async () => {
                 const exec = await startTrackingAction(userId, routine.id);
-                if (exec)
+                if (exec) {
                     router.push(`/session/${exec.id}`);
-                else
-                    bump();
-            }} className="inline-flex items-center gap-1.5 rounded-md bg-secondary px-3 py-2 text-xs font-semibold uppercase tracking-wider  transition-transform hover:-translate-y-0.5 text-card-foreground">
-              <Play className="size-4 text-card-foreground"/>
+                    return 'keep';
+                }
+                bump();
+            })} className="inline-flex items-center gap-1.5 rounded-md bg-secondary px-3 py-2 text-xs font-semibold uppercase tracking-wider  transition-transform hover:-translate-y-0.5 text-card-foreground disabled:opacity-70">
+              {isBusy(`start:${routine.id}`) ? <Spinner/> : <Play className="size-4 text-card-foreground"/>}
               Iniciar
             </button>
             <button onClick={() => setHistoryFor(historyFor === routine.id ? null : routine.id)} className="text-card-foreground inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-muted">
@@ -149,8 +153,11 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <button onClick={() => router.push(`/session/${x.id}`)} className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-muted">
-                      <Pencil className="size-4"/>
+                    <button disabled={isBusy(`go:${x.id}`)} onClick={() => run(`go:${x.id}`, async () => {
+                        router.push(`/session/${x.id}`);
+                        return 'keep';
+                    })} className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-muted disabled:opacity-70">
+                      {isBusy(`go:${x.id}`) ? <Spinner/> : <Pencil className="size-4"/>}
                       Continuar
                     </button>
                     {canInvite && (<button onClick={async () => {
@@ -159,14 +166,14 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
                             setInviting(null);
                             bump();
                         }} disabled={inviting === x.id} className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-muted disabled:opacity-60">
-                        <UserPlus className="size-4"/>
+                        {inviting === x.id ? <Spinner/> : <UserPlus className="size-4"/>}
                         Invitar a {other!.displayName}
                       </button>)}
-                    <button onClick={async () => {
+                    <button disabled={isBusy(`end:${x.id}`)} onClick={() => run(`end:${x.id}`, async () => {
                         await endTrackingAction(x.id);
                         bump();
-                    }} className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold uppercase tracking-wider text-brand-foreground transition-transform hover:-translate-y-0.5">
-                      <Flag className="size-4"/>
+                    })} className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold uppercase tracking-wider text-brand-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-70">
+                      {isBusy(`end:${x.id}`) ? <Spinner/> : <Flag className="size-4"/>}
                       Finalizar
                     </button>
                   </div>
@@ -220,11 +227,11 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
                       <button onClick={() => setExerciseForm({ routineId: routine.id, exercise: ex })} className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-card-foreground" aria-label="Editar ejercicio">
                         <Pencil className="size-4"/>
                       </button>
-                      <button onClick={async () => {
+                      <button disabled={isBusy(`rmex:${ex.id}`)} onClick={() => run(`rmex:${ex.id}`, async () => {
                             await removeExerciseAction(routine.id, ex.id);
                             bump();
-                        }} className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive" aria-label="Eliminar ejercicio">
-                        <Trash2 className="size-4"/>
+                        })} className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-70" aria-label="Eliminar ejercicio">
+                        {isBusy(`rmex:${ex.id}`) ? <Spinner/> : <Trash2 className="size-4"/>}
                       </button>
                     </div>
                   </li>))}
@@ -273,15 +280,18 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => router.push(`/session/${x.id}`)} className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-muted">
-                    <Pencil className="size-4"/>
+                  <button disabled={isBusy(`go:${x.id}`)} onClick={() => run(`go:${x.id}`, async () => {
+                        router.push(`/session/${x.id}`);
+                        return 'keep';
+                    })} className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-muted disabled:opacity-70">
+                    {isBusy(`go:${x.id}`) ? <Spinner/> : <Pencil className="size-4"/>}
                     Continuar
                   </button>
-                  <button onClick={async () => {
+                  <button disabled={isBusy(`end:${x.id}`)} onClick={() => run(`end:${x.id}`, async () => {
                         await endTrackingAction(x.id);
                         bump();
-                    }} className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold uppercase tracking-wider text-brand-foreground transition-transform hover:-translate-y-0.5">
-                    <Flag className="size-4"/>
+                    })} className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold uppercase tracking-wider text-brand-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-70">
+                    {isBusy(`end:${x.id}`) ? <Spinner/> : <Flag className="size-4"/>}
                     Finalizar
                   </button>
                 </div>
@@ -312,18 +322,19 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
                 }} className="flex flex-1 items-center gap-2">
                 <input autoFocus value={editingGroup.name} onChange={(e) => setEditingGroup({ id: section.id, name: e.target.value })} className="rounded-md border border-input bg-background px-3 py-1.5 font-heading text-lg uppercase tracking-wide text-foreground outline-none focus:border-ring"/>
                 <button type="submit" disabled={savingGroup} aria-label="Guardar nombre" className="rounded-md p-1.5 text-secondary transition-colors hover:bg-muted disabled:opacity-60">
-                  <Check className="size-4"/>
+                  {savingGroup ? <Spinner/> : <Check className="size-4"/>}
                 </button>
                 <button type="button" onClick={() => setEditingGroup(null)} aria-label="Cancelar" className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted">
                   <X className="size-4"/>
                 </button>
               </form>) : isConfirmingDelete ? (<div className="flex flex-1 items-center gap-3">
                 <p className="text-sm text-destructive">¿Borrar el grupo "{section.name}"? Las rutinas no se eliminan, solo quedan sin grupo.</p>
-                <button onClick={async () => {
+                <button disabled={isBusy(`rmgroup:${section.id}`)} onClick={() => run(`rmgroup:${section.id}`, async () => {
                         await deleteRoutineGroupAction(section.id);
                         setConfirmDeleteGroup(null);
                         bump();
-                    }} className="shrink-0 rounded-md bg-destructive px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-white">
+                    })} className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-destructive px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-white disabled:opacity-70">
+                  {isBusy(`rmgroup:${section.id}`) && <Spinner className="size-3"/>}
                   Sí, borrar
                 </button>
                 <button onClick={() => setConfirmDeleteGroup(null)} className="shrink-0 rounded-md border border-border px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:bg-muted">
@@ -369,7 +380,7 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
             }} className="flex items-center gap-2">
           <input autoFocus value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} placeholder="Nombre del grupo…" className="flex-1 rounded-md border border-input bg-background px-4 py-2.5 text-foreground outline-none focus:border-ring sm:flex-none sm:w-64"/>
           <button type="submit" disabled={savingGroup} className="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-brand-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-60">
-            <Check className="size-4"/>
+            {savingGroup ? <Spinner/> : <Check className="size-4"/>}
             Crear
           </button>
           <button type="button" onClick={() => { setCreatingGroup(false); setNewGroupName(''); }} className="rounded-md border border-border p-2.5 text-muted-foreground transition-colors hover:bg-muted">

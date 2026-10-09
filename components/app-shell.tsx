@@ -5,6 +5,7 @@ import { LayoutDashboard, Ruler, Dumbbell, Flame, LogOut, } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { logoutAction } from '@/app/(app)/actions';
+import { SubmitButton } from '@/components/ui/submit-button';
 const NAV = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/measurements', label: 'Medidas', icon: Ruler },
@@ -53,10 +54,10 @@ export function AppShell({ children }: {
             </div>
           </div>
           <form action={logoutAction}>
-            <button type="submit" className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+            <SubmitButton className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
               <LogOut className="size-4"/>
               Cerrar sesión
-            </button>
+            </SubmitButton>
           </form>
         </div>
       </aside>
@@ -89,10 +90,10 @@ export function AppShell({ children }: {
               </div>
             </div>
             <form action={logoutAction}>
-              <button type="submit" className="flex w-full items-center gap-2 rounded-xl px-4 py-3 text-sidebar-foreground/70 hover:bg-sidebar-accent">
+              <SubmitButton className="flex w-full items-center gap-2 rounded-xl px-4 py-3 text-sidebar-foreground/70 hover:bg-sidebar-accent">
                 <LogOut className="size-4"/>
                 Cerrar sesión
-              </button>
+              </SubmitButton>
             </form>
           </div>)}
 

@@ -1,4 +1,5 @@
 'use client';
+import { Spinner } from '@/components/ui/spinner';
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Modal } from '@/components/modal';
@@ -141,7 +142,8 @@ export function RoutineForm({ userId, routine, executionCount = 0, initialGroups
           <button type="button" onClick={onClose} className="flex-1 rounded-md border border-border px-5 py-3 font-heading text-base uppercase tracking-wide transition-colors hover:bg-muted">
             Cancelar
           </button>
-          <button type="submit" disabled={saving} className="flex-1 rounded-md bg-brand px-5 py-3 font-heading text-base uppercase tracking-wide text-brand-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-60">
+          <button type="submit" disabled={saving} className="flex flex-1 items-center justify-center gap-2 rounded-md bg-brand px-5 py-3 font-heading text-base uppercase tracking-wide text-brand-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-60">
+            {saving && <Spinner/>}
             {saving ? 'Guardando…' : 'Guardar'}
           </button>
         </div>
@@ -154,7 +156,8 @@ export function RoutineForm({ userId, routine, executionCount = 0, initialGroups
                 <button type="button" onClick={() => setConfirmDelete(false)} className="flex-1 rounded-md border border-border px-4 py-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground hover:bg-muted">
                   Cancelar
                 </button>
-                <button type="button" onClick={handleDelete} disabled={deleting} className="flex-1 rounded-md bg-destructive px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white disabled:opacity-60">
+                <button type="button" onClick={handleDelete} disabled={deleting} className="flex flex-1 items-center justify-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white disabled:opacity-60">
+                  {deleting && <Spinner/>}
                   {deleting ? 'Borrando…' : 'Sí, borrar'}
                 </button>
               </div>
