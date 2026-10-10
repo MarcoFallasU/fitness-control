@@ -3,6 +3,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { useState } from 'react';
 import { Modal } from '@/components/modal';
 import { addExerciseAction, updateExerciseAction } from '@/app/(app)/exercises/actions';
+import { MUSCLE_GROUPS } from '@/lib/muscle-groups';
 import type { Exercise } from '@/lib/types';
 interface ExerciseFormProps {
     routineId: string;
@@ -10,17 +11,6 @@ interface ExerciseFormProps {
     onClose: () => void;
     onSaved: () => void;
 }
-const MUSCLE_GROUPS = [
-    'Pecho',
-    'Espalda',
-    'Hombros',
-    'Bíceps',
-    'Tríceps',
-    'Pierna',
-    'Glúteo',
-    'Core',
-    'Full body',
-];
 export function ExerciseForm({ routineId, exercise, onClose, onSaved }: ExerciseFormProps) {
     const [name, setName] = useState(exercise?.name ?? '');
     const [muscleGroup, setMuscleGroup] = useState(exercise?.muscleGroup ?? MUSCLE_GROUPS[0]);

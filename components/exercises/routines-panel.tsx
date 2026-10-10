@@ -5,7 +5,6 @@ import { ChevronDown, Pencil, Plus, Trash2, Play, History, Share2, Dumbbell, Fla
 import { startTrackingAction, endTrackingAction, removeExerciseAction, createRoutineGroupAction, updateRoutineGroupAction, deleteRoutineGroupAction, getRoutineHistoryAction, } from '@/app/(app)/exercises/actions';
 import type { Routine, Exercise, RoutineGroup, ActiveExecution, HistoryExecution, User } from '@/lib/types';
 import { formatLongDate } from '@/lib/format';
-import { encodeSharedRoutine } from '@/lib/share-routine';
 import { useBusy } from '@/lib/use-busy';
 import { Spinner } from '@/components/ui/spinner';
 import { RoutineForm } from './routine-form';
@@ -26,7 +25,7 @@ export function RoutinesPanel({ userId, other, routines, groups, completedCounts
     const { run, isBusy } = useBusy();
     const [sharedId, setSharedId] = useState<string | null>(null);
     async function shareRoutine(routine: Routine) {
-        const url = `${window.location.origin}/share/routine?d=${encodeSharedRoutine(routine)}`;
+        const url = `${window.location.origin}/share/routine/${routine.id}`;
         try {
             // Native share sheet on mobile, clipboard everywhere else.
             if (typeof navigator.share === 'function' && window.matchMedia('(pointer: coarse)').matches) {
