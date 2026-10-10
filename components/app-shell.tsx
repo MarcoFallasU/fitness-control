@@ -5,6 +5,7 @@ import { LayoutDashboard, Ruler, Dumbbell, Flame, LogOut, Settings, } from 'luci
 import { useRef, useState } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { logoutAction } from '@/app/(app)/actions';
+import { BrandLogo } from '@/components/brand-logo';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { LiquidBubble, useLiquidBubble } from '@/components/ui/liquid-bubble';
 const NAV = [
@@ -42,10 +43,8 @@ export function AppShell({ children }: {
 
       <aside className="glass sticky top-4 m-4 hidden h-[calc(100vh-2rem)] w-64 shrink-0 flex-col justify-between rounded-3xl p-5 lg:flex">
         <div>
-          <Link href="/dashboard" className="mb-8 block px-1">
-            <span className="font-heading text-2xl font-extrabold tracking-tight">
-              Gymbros
-            </span>
+          <Link href="/dashboard" className="mb-8 block px-1" aria-label="GYM BROS">
+            <BrandLogo height={36}/>
           </Link>
           {navLinks}
         </div>
@@ -77,10 +76,8 @@ export function AppShell({ children }: {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="glass sticky top-4 z-40 mx-4 mt-4 flex items-center justify-between rounded-2xl px-4 py-3 lg:hidden">
-          <Link href="/dashboard">
-            <span className="font-heading text-xl font-extrabold tracking-tight">
-              Gymbros
-            </span>
+          <Link href="/dashboard" aria-label="GYM BROS">
+            <BrandLogo height={32}/>
           </Link>
           <button onClick={() => setOpen((v) => !v)} className="flex items-center rounded-full p-1 text-sidebar-foreground" aria-label="Cuenta">
             <span className="flex size-9 items-center justify-center rounded-full font-heading text-sm font-bold text-ink" style={{ backgroundColor: user.color }}>

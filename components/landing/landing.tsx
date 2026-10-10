@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { ArrowRight, Ruler, Dumbbell, Flame, LineChart, Trophy, Users } from 'lucide-react';
+import { BrandLogo } from '@/components/brand-logo';
 const FEATURES = [
     {
         icon: Ruler,
@@ -38,9 +39,7 @@ export function Landing() {
     return (<main className="min-h-screen overflow-hidden bg-background text-foreground">
       
       <header className="relative z-20 flex items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
-        <span className="font-heading text-3xl tracking-tight">
-          GYM<span className="text-brand">BROS</span>
-        </span>
+        <BrandLogo height={44}/>
         <Link href="/login" className="rounded-md bg-primary px-5 py-2.5 font-heading text-sm uppercase tracking-widest text-primary-foreground transition-transform hover:-translate-y-0.5">
           Entrar
         </Link>

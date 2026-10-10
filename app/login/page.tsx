@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
+import { BrandLogo } from '@/components/brand-logo';
 import { LoginForm } from '@/components/login-form';
 
 export default async function LoginPage({ searchParams }: {
@@ -14,8 +15,8 @@ export default async function LoginPage({ searchParams }: {
       <div className="flex w-full max-w-4xl items-center gap-16">
 
         <section className="hidden flex-1 lg:block">
-          <Link href="/" className="font-heading text-2xl font-extrabold tracking-tight">
-            Gymbros
+          <Link href="/" className="inline-block" aria-label="GYM BROS">
+            <BrandLogo height={48}/>
           </Link>
           <h1 className="font-heading mt-5 text-4xl font-extrabold leading-tight">
             Tu progreso,<br />en un solo lugar.

@@ -1,6 +1,6 @@
 {
-  "name": "Gymbros",
-  "short_name": "Gymbros",
+  "name": "GYM BROS",
+  "short_name": "GYM BROS",
   "description": "Rastrea tus medidas, rutinas y calorías junto a tu compañero de entreno.",
   "start_url": "/dashboard",
   "scope": "/",

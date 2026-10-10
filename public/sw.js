@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gymbros-shell-v1';
+const CACHE_NAME = 'gymbros-shell-v2';
 const OFFLINE_URL = '/offline.html';
 const PRECACHE = [OFFLINE_URL, '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
