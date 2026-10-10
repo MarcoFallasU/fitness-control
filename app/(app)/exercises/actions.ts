@@ -1,7 +1,8 @@
 'use server';
 import { revalidatePath } from 'next/cache';
+import { getCurrentUser } from '@/lib/auth/session';
 import * as svc from '@/services/exercisesService';
-import type { Routine, RoutineGroup, Exercise, RoutineExecution, ExerciseExecution } from '@/lib/types';
+import type { Routine, RoutineGroup, Exercise, RoutineExecution, ExerciseExecution, HistoryExecution } from '@/lib/types';
 
 function refresh() {
     revalidatePath('/exercises');
@@ -59,6 +60,13 @@ export async function updateExerciseAction(routineId: string, exerciseId: string
 export async function removeExerciseAction(routineId: string, exerciseId: string): Promise<void> {
     await svc.removeExercise(routineId, exerciseId);
     refresh();
+}
+
+export async function getRoutineHistoryAction(routineId: string): Promise<HistoryExecution[]> {
+    const user = await getCurrentUser();
+    if (!user)
+        return [];
+    return svc.getRoutineHistory(user.id, routineId);
 }
 
 export async function startTrackingAction(userId: string, routineId: string): Promise<RoutineExecution | undefined> {

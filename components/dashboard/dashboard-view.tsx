@@ -4,17 +4,19 @@ import { Dumbbell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MetricCard } from '@/components/metric-card';
 import { computeZoneDeltas } from '@/lib/measurements-utils';
-import { computePRTable, countExecutionsThisMonth } from '@/lib/exercises-utils';
+import type { PRRow } from '@/lib/exercises-utils';
 import { computeAverage, computeDailySeries } from '@/lib/calories-utils';
 import { formatNumber, signed } from '@/lib/format';
-import type { MeasurementEntry, RoutineExecution, CalorieEntry, Routine } from '@/lib/types';
+import type { MeasurementEntry, CalorieEntry, Routine } from '@/lib/types';
 
 const DAY_ABBR = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 interface DashboardViewProps {
   displayName: string;
   measurements: MeasurementEntry[];
-  executions: RoutineExecution[];
+  prTable: PRRow[];
+  sessionsThisMonth: number;
+  sessionDates: string[];
   calories: CalorieEntry[];
   routines: Routine[];
 }
@@ -55,20 +57,19 @@ function lastNDates(n: number): string[] {
   return out;
 }
 
-export function DashboardView({ displayName, measurements, executions, calories, routines }: DashboardViewProps) {
+export function DashboardView({ displayName, measurements, prTable, sessionsThisMonth, sessionDates, calories, routines }: DashboardViewProps) {
   const zoneDeltas = computeZoneDeltas(measurements);
   const topDelta = zoneDeltas
     .filter((d) => d.delta != null)
     .sort((a, b) => Math.abs(b.delta!) - Math.abs(a.delta!))[0];
 
-  const prTable = computePRTable(executions);
   const topPR = prTable[0];
 
   const avg7 = computeAverage(calories, 7);
-  const monthlyExecs = countExecutionsThisMonth(executions);
+  const monthlyExecs = sessionsThisMonth;
 
   const last7Dates = lastNDates(7);
-  const executionDates = new Set(executions.map((x) => x.date));
+  const executionDates = new Set(sessionDates);
   const weekBars = last7Dates.map((date) => ({
     date,
     done: executionDates.has(date),

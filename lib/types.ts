@@ -67,3 +67,26 @@ export interface CalorieEntry {
     date: string;
     calories: number;
 }
+
+/** What the history screens need from a finished exercise, without per-set details. */
+export interface HistoryExercise {
+    exerciseName: string;
+    muscleGroup: string;
+    sets: number;
+    reps: number;
+    weight: number;
+}
+export interface HistoryExecution {
+    id: string;
+    routineId: string;
+    routineName: string;
+    date: string;
+    exercises: HistoryExercise[];
+}
+export interface ActiveExecution {
+    id: string;
+    routineId: string;
+    routineName: string;
+    date: string;
+    exerciseCount: number;
+}

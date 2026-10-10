@@ -2,8 +2,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, Pencil, Plus, Trash2, Play, History, Share2, Dumbbell, Flag, Activity, UserPlus, Check, X, } from 'lucide-react';
-import { startTrackingAction, endTrackingAction, removeExerciseAction, createRoutineGroupAction, updateRoutineGroupAction, deleteRoutineGroupAction, } from '@/app/(app)/exercises/actions';
-import type { Routine, Exercise, RoutineGroup, RoutineExecution, User } from '@/lib/types';
+import { startTrackingAction, endTrackingAction, removeExerciseAction, createRoutineGroupAction, updateRoutineGroupAction, deleteRoutineGroupAction, getRoutineHistoryAction, } from '@/app/(app)/exercises/actions';
+import type { Routine, Exercise, RoutineGroup, ActiveExecution, HistoryExecution, User } from '@/lib/types';
 import { formatLongDate } from '@/lib/format';
 import { encodeSharedRoutine } from '@/lib/share-routine';
 import { useBusy } from '@/lib/use-busy';
@@ -15,13 +15,13 @@ interface RoutinesPanelProps {
     other?: User;
     routines: Routine[];
     groups: RoutineGroup[];
-    executions: RoutineExecution[];
-    activeExecutions: RoutineExecution[];
-    otherActiveExecutions: RoutineExecution[];
+    completedCounts: Record<string, number>;
+    activeExecutions: ActiveExecution[];
+    otherActiveExecutions: ActiveExecution[];
     newRoutineSignal: number;
 }
 const NO_GROUP = '__none__';
-export function RoutinesPanel({ userId, other, routines, groups, executions, activeExecutions, otherActiveExecutions, newRoutineSignal }: RoutinesPanelProps) {
+export function RoutinesPanel({ userId, other, routines, groups, completedCounts, activeExecutions, otherActiveExecutions, newRoutineSignal }: RoutinesPanelProps) {
     const router = useRouter();
     const { run, isBusy } = useBusy();
     const [sharedId, setSharedId] = useState<string | null>(null);
@@ -52,6 +52,20 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
         exercise?: Exercise;
     } | null>(null);
     const [historyFor, setHistoryFor] = useState<string | null>(null);
+    // History is fetched the first time a routine's history is opened, not with the page.
+    const [historyByRoutine, setHistoryByRoutine] = useState<Record<string, HistoryExecution[] | 'error'>>({});
+    useEffect(() => {
+        setHistoryByRoutine({});
+    }, [completedCounts]);
+    function toggleHistory(routineId: string) {
+        const opening = historyFor !== routineId;
+        setHistoryFor(opening ? routineId : null);
+        if (!opening || historyByRoutine[routineId])
+            return;
+        getRoutineHistoryAction(routineId)
+            .then((history) => setHistoryByRoutine((prev) => ({ ...prev, [routineId]: history })))
+            .catch(() => setHistoryByRoutine((prev) => ({ ...prev, [routineId]: 'error' })));
+    }
     const [inviting, setInviting] = useState<string | null>(null);
     const [editingGroup, setEditingGroup] = useState<{ id: string; name: string } | null>(null);
     const [confirmDeleteGroup, setConfirmDeleteGroup] = useState<string | null>(null);
@@ -83,7 +97,8 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
     const guestActive = useMemo(() => activeExecutions.filter((x) => !routines.some((r) => r.id === x.routineId)), [activeExecutions, routines]);
     function renderRoutine(routine: Routine) {
         const open = expanded === routine.id;
-        const completed = executions.filter((x) => x.routineId === routine.id);
+        const completedCount = completedCounts[routine.id] ?? 0;
+        const history = historyByRoutine[routine.id];
         const active = activeExecutions.filter((x) => x.routineId === routine.id);
         const otherActive = otherActiveExecutions.filter((x) => x.routineId === routine.id);
         const canInvite = !!other && otherActive.length === 0;
@@ -101,7 +116,7 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
               <p className="text-xs text-muted-foreground">
                 {routine.exercises.length} ejercicios
                 {routine.days.length > 0 && ` · ${routine.days.join(', ')}`}
-                {` · ${completed.length} ejecuciones`}
+                {` · ${completedCount} ejecuciones`}
                 {active.length > 0 && ` · ${active.length} en curso`}
               </p>
             </div>
@@ -119,11 +134,11 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
               {isBusy(`start:${routine.id}`) ? <Spinner/> : <Play className="size-4 text-card-foreground"/>}
               Iniciar
             </button>
-            <button onClick={() => setHistoryFor(historyFor === routine.id ? null : routine.id)} className="text-card-foreground inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-muted">
+            <button onClick={() => toggleHistory(routine.id)} className="text-card-foreground inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-muted">
               <History className="size-4"/>
               Historial
             </button>
-            <button onClick={() => setRoutineForm({ routine, executionCount: completed.length })} className=" text-card-foreground inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-muted">
+            <button onClick={() => setRoutineForm({ routine, executionCount: completedCount })} className=" text-card-foreground inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-muted">
               <Pencil className="size-4"/>
               Editar
             </button>
@@ -149,7 +164,7 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
                   <div>
                     <p className="font-semibold">{formatLongDate(x.date)}</p>
                     <p className="font-mono text-xs text-muted-foreground">
-                      {x.exercises.length} ejercicios en seguimiento
+                      {x.exerciseCount} ejercicios en seguimiento
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -188,7 +203,7 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
                         {other?.displayName} · {formatLongDate(x.date)}
                       </p>
                       <p className="font-mono text-xs text-muted-foreground">
-                        {x.exercises.length} ejercicios en seguimiento
+                        {x.exerciseCount} ejercicios en seguimiento
                       </p>
                     </div>
                   </div>
@@ -243,10 +258,14 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
             <p className="mb-3 font-mono text-xs uppercase tracking-widest text-muted-foreground">
               Historial de ejecuciones
             </p>
-            {completed.length === 0 ? (<p className="py-4 text-center text-sm text-muted-foreground">
+            {history === undefined ? (<p className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+                <Spinner/> Cargando historial…
+              </p>) : history === 'error' ? (<p className="py-4 text-center text-sm text-muted-foreground">
+                No se pudo cargar el historial. Cierra y vuelve a abrirlo para reintentar.
+              </p>) : history.length === 0 ? (<p className="py-4 text-center text-sm text-muted-foreground">
                 Aún no has completado esta rutina.
               </p>) : (<ul className="flex flex-col gap-3">
-                {completed.map((x) => (<li key={x.id} className="rounded-md border border-border bg-card p-3">
+                {history.map((x) => (<li key={x.id} className="rounded-md border border-border bg-card p-3">
                     <p className="mb-2 font-heading text-base uppercase tracking-wide">
                       {formatLongDate(x.date)}
                     </p>
@@ -276,7 +295,7 @@ export function RoutinesPanel({ userId, other, routines, groups, executions, act
                 <div>
                   <p className="font-heading text-lg uppercase tracking-wide text-card-foreground">{x.routineName}</p>
                   <p className="font-mono text-xs text-muted-foreground">
-                    {formatLongDate(x.date)} · {x.exercises.length} ejercicios en seguimiento
+                    {formatLongDate(x.date)} · {x.exerciseCount} ejercicios en seguimiento
                   </p>
                 </div>
                 <div className="flex gap-2">

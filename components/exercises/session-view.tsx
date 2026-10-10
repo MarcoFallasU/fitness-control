@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Check, Flag, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Check, Flag, ArrowRight, SkipForward } from 'lucide-react';
 import { updateExecutionExercisesAction, finalizeExecutionAction } from '@/app/(app)/exercises/actions';
 import { computeExerciseVolume } from '@/lib/exercises-utils';
 import { usePartnerSync } from '@/lib/use-partner-sync';
@@ -17,6 +17,16 @@ interface SessionViewProps {
 }
 
 type Mode = 'simple' | 'advanced';
+
+// Next exercise after `from` that is not done yet, wrapping around; -1 when none is left.
+function nextPendingFrom(list: { done?: boolean }[], from: number): number {
+    for (let step = 1; step < list.length; step++) {
+        const i = (from + step) % list.length;
+        if (!list[i].done)
+            return i;
+    }
+    return -1;
+}
 
 function withSetDetails(ex: ExerciseExecution): ExerciseExecution & { setDetails: SetDetail[] } {
     const details = ex.setDetails && ex.setDetails.length === ex.sets
@@ -70,23 +80,36 @@ export function SessionView({ execution, me }: SessionViewProps) {
         setExercises((prev) => prev.map((e, i) => (i === index ? { ...e, ...patch } : e)));
     }
 
+    // Simple mode treats every set alike, so the per-set details are rebuilt from the three numbers.
+    // Without this the two views drift apart and the saved record (records, summary) reads stale values.
+    function applySimple(field: 'sets' | 'reps' | 'weight', value: number) {
+        const next = { sets: current.sets, reps: current.reps, weight: current.weight, [field]: value };
+        updateCurrent({
+            ...next,
+            setDetails: Array.from({ length: Math.max(1, next.sets) }, () => ({ reps: next.reps, weight: next.weight })),
+        });
+        scheduleSave();
+    }
+
     function stepField(field: 'sets' | 'reps' | 'weight', delta: number) {
         const min = field === 'weight' ? 0 : 1;
-        const value = Math.max(min, +((current[field] ?? 0) + delta).toFixed(1));
-        updateCurrent({ [field]: value } as Partial<ExerciseExecution>);
-        scheduleSave();
+        applySimple(field, Math.max(min, +((current[field] ?? 0) + delta).toFixed(1)));
     }
 
     function typeField(field: 'sets' | 'reps' | 'weight', raw: string) {
         const value = parseFloat(raw);
-        updateCurrent({ [field]: isNaN(value) ? 0 : value } as Partial<ExerciseExecution>);
-        scheduleSave();
+        applySimple(field, isNaN(value) ? 0 : value);
     }
 
+    // Advanced edits keep the summary numbers (top weight, average reps) in step with the sets.
     function typeSetDetail(setIdx: number, field: 'reps' | 'weight', raw: string) {
         const value = parseFloat(raw);
         const nextDetails = current.setDetails.map((s, i) => (i === setIdx ? { ...s, [field]: isNaN(value) ? 0 : value } : s));
-        updateCurrent({ setDetails: nextDetails });
+        updateCurrent({
+            setDetails: nextDetails,
+            weight: Math.max(...nextDetails.map((d) => d.weight)),
+            reps: Math.round(nextDetails.reduce((acc, d) => acc + d.reps, 0) / nextDetails.length),
+        });
         scheduleSave();
     }
 
@@ -100,14 +123,21 @@ export function SessionView({ execution, me }: SessionViewProps) {
         await saveNow();
     }
 
-    async function goNext() {
+    // Only exercises marked as done are recorded when the session ends; everything else is dropped.
+    async function finishExercise() {
         const nextExercises = exercises.map((e, i) => (i === index ? { ...e, done: true } : e));
         setExercises(nextExercises);
-        const nextPending = nextExercises.findIndex((e) => !e.done);
-        setIndex(nextPending === -1 ? (index + 1) % total : nextPending);
+        const nextPending = nextPendingFrom(nextExercises, index);
+        if (nextPending !== -1)
+            setIndex(nextPending);
         setMode('simple');
         exercisesRef.current = nextExercises;
         await saveNow();
+    }
+
+    function skipExercise() {
+        const nextPending = nextPendingFrom(exercises, index);
+        selectExercise(nextPending === -1 ? (index + 1) % total : nextPending);
     }
 
     async function handleExit() {
@@ -135,8 +165,10 @@ export function SessionView({ execution, me }: SessionViewProps) {
             localStorage.removeItem(startKey);
         }
         catch { }
+        const anyDone = exercisesRef.current.some((e) => e.done);
         await finalizeExecutionAction(execution.id, exercisesRef.current);
-        router.push(`/session/${execution.id}/summary${seconds !== undefined ? `?t=${seconds}` : ''}`);
+        // A session with nothing marked as done is discarded, so there is no summary to show.
+        router.push(anyDone ? `/session/${execution.id}/summary${seconds !== undefined ? `?t=${seconds}` : ''}` : '/exercises');
     }
 
     // Draggable peek sheet
@@ -343,13 +375,25 @@ export function SessionView({ execution, me }: SessionViewProps) {
         </>) : (<p className="mt-10 text-center text-sm text-muted-foreground">Esta rutina no tiene ejercicios.</p>)}
       </div>
 
-      {current && (<div className="mx-auto mt-6 flex max-w-lg gap-2.5 px-5 sm:px-8" style={{ paddingBottom: PEEK_OFFSET + 76 }}>
-          <button onClick={handleFinish} disabled={finishing} className="shrink-0 rounded-2xl border border-border px-4 text-sm font-bold text-muted-foreground disabled:opacity-60">
-            <span className="flex items-center gap-1.5">{finishing ? <Spinner/> : <Flag className="size-4"/>}Terminar</span>
-          </button>
-          <button disabled={isBusy('next')} onClick={() => run('next', goNext)} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 font-heading text-sm font-extrabold text-brand-foreground disabled:opacity-70">
-            Siguiente ejercicio {isBusy('next') ? <Spinner/> : <ArrowRight className="size-4"/>}
-          </button>
+      {current && (<div className="mx-auto mt-6 max-w-lg px-5 sm:px-8" style={{ paddingBottom: PEEK_OFFSET + 76 }}>
+          <p className="mb-2.5 text-center text-xs text-muted-foreground">
+            Se registrarán <span className="font-bold text-foreground">{doneCount}</span> de {total} ejercicios (solo los terminados)
+          </p>
+          <div className="flex gap-2.5">
+            <button onClick={handleFinish} disabled={finishing} className="shrink-0 rounded-2xl border border-border px-4 text-sm font-bold text-muted-foreground disabled:opacity-60">
+              <span className="flex items-center gap-1.5">{finishing ? <Spinner/> : <Flag className="size-4"/>}Finalizar</span>
+            </button>
+            {current.done ? (<button onClick={skipExercise} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 font-heading text-sm font-extrabold text-brand-foreground">
+                Siguiente ejercicio <ArrowRight className="size-4"/>
+              </button>) : (<>
+                {nextPendingIdx !== -1 && (<button onClick={skipExercise} aria-label="Saltar este ejercicio sin registrarlo" className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-border px-4 text-sm font-bold text-muted-foreground">
+                    <SkipForward className="size-4"/>Saltar
+                  </button>)}
+                <button disabled={isBusy('next')} onClick={() => run('next', finishExercise)} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 font-heading text-sm font-extrabold text-brand-foreground disabled:opacity-70">
+                  {isBusy('next') ? <Spinner/> : <Check className="size-4"/>} Terminar ejercicio
+                </button>
+              </>)}
+          </div>
         </div>)}
 
       {current && (<>
@@ -357,7 +401,7 @@ export function SessionView({ execution, me }: SessionViewProps) {
           <div ref={sheetRef} className="glass-nav session-sheet fixed inset-x-0 bottom-0 z-50 rounded-t-3xl" style={{ height: '70%' }}>
             <div ref={handleRef} className="flex cursor-grab flex-col items-center gap-2 py-3">
               <div className="h-1 w-9 rounded-full bg-white/30"/>
-              <span className="text-xs font-bold text-muted-foreground">{execution.routineName} · {total} ejercicios</span>
+              <span className="text-xs font-bold text-muted-foreground">{execution.routineName} · {doneCount}/{total} terminados</span>
             </div>
 
             {nextPendingIdx !== -1 && (<div className="px-5 pb-2.5">

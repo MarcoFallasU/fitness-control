@@ -7,8 +7,11 @@ export default async function CaloriesPage() {
     const me = await getCurrentUser();
     if (!me)
         redirect('/login');
-    const [users, entries] = await Promise.all([getAllUsers(), getCalories(me.id)]);
+    const users = await getAllUsers();
     const other = users.find((u) => u.id !== me.id);
-    const otherEntries = other ? await getCalories(other.id) : [];
+    const [entries, otherEntries] = await Promise.all([
+        getCalories(me.id),
+        other ? getCalories(other.id) : Promise.resolve([]),
+    ]);
     return <CaloriesView me={me} other={other} entries={entries} otherEntries={otherEntries}/>;
 }

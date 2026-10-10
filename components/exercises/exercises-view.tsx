@@ -5,7 +5,8 @@ import { PageHeader } from '@/components/page-header';
 import { RoutinesPanel } from './routines-panel';
 import { ProgressPanel } from './progress-panel';
 import { LiquidBubble, useLiquidBubble } from '@/components/ui/liquid-bubble';
-import type { User, Routine, RoutineGroup, RoutineExecution } from '@/lib/types';
+import type { ExerciseStats, ProgressPoint } from '@/lib/exercises-utils';
+import type { User, Routine, RoutineGroup, ActiveExecution } from '@/lib/types';
 type Tab = 'routines' | 'progress';
 const TABS: {
     key: Tab;
@@ -19,12 +20,13 @@ interface ExercisesViewProps {
     other?: User;
     routines: Routine[];
     groups: RoutineGroup[];
-    executions: RoutineExecution[];
-    activeExecutions: RoutineExecution[];
-    otherExecutions: RoutineExecution[];
-    otherActiveExecutions: RoutineExecution[];
+    completedCounts: Record<string, number>;
+    activeExecutions: ActiveExecution[];
+    otherActiveExecutions: ActiveExecution[];
+    stats: ExerciseStats;
+    otherPoints: ProgressPoint[];
 }
-export function ExercisesView({ me, other, routines, groups, executions, activeExecutions, otherExecutions, otherActiveExecutions }: ExercisesViewProps) {
+export function ExercisesView({ me, other, routines, groups, completedCounts, activeExecutions, otherActiveExecutions, stats, otherPoints }: ExercisesViewProps) {
     const [tab, setTab] = useState<Tab>('routines');
     const [newRoutineSignal, setNewRoutineSignal] = useState(0);
     const tabsRef = useRef<HTMLDivElement>(null);
@@ -46,7 +48,7 @@ export function ExercisesView({ me, other, routines, groups, executions, activeE
       </div>
 
       <div className="px-5 py-8 sm:px-8 lg:px-12">
-        {tab === 'routines' ? (<RoutinesPanel userId={me.id} other={other} routines={routines} groups={groups} executions={executions} activeExecutions={activeExecutions} otherActiveExecutions={otherActiveExecutions} newRoutineSignal={newRoutineSignal}/>) : (<ProgressPanel me={me} other={other} myExecutions={executions} otherExecutions={otherExecutions}/>)}
+        {tab === 'routines' ? (<RoutinesPanel userId={me.id} other={other} routines={routines} groups={groups} completedCounts={completedCounts} activeExecutions={activeExecutions} otherActiveExecutions={otherActiveExecutions} newRoutineSignal={newRoutineSignal}/>) : (<ProgressPanel me={me} other={other} stats={stats} otherPoints={otherPoints}/>)}
       </div>
     </div>);
 }

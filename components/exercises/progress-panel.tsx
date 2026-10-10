@@ -3,38 +3,38 @@ import { useMemo, useState } from 'react';
 import { Trophy, Flame } from 'lucide-react';
 import { SectionCard } from '@/components/section-card';
 import { ThemedLineChart } from '@/components/charts';
-import { computeExerciseNames, computeExerciseProgress, computeExerciseComparison, computePR, computePRTable, } from '@/lib/exercises-utils';
-import type { User, RoutineExecution } from '@/lib/types';
+import { pointsToProgress, pointsToComparison, pointsToPR } from '@/lib/exercises-utils';
+import type { ExerciseStats, ProgressPoint } from '@/lib/exercises-utils';
+import type { User } from '@/lib/types';
 import { formatShortDate, signed } from '@/lib/format';
 interface ProgressPanelProps {
     me: User;
     other?: User;
-    myExecutions: RoutineExecution[];
-    otherExecutions: RoutineExecution[];
+    stats: ExerciseStats;
+    otherPoints: ProgressPoint[];
 }
-export function ProgressPanel({ me, other, myExecutions, otherExecutions }: ProgressPanelProps) {
-    const names = useMemo(() => computeExerciseNames(myExecutions), [myExecutions]);
+export function ProgressPanel({ me, other, stats, otherPoints }: ProgressPanelProps) {
+    const { names, prTable, points } = stats;
     const [selected, setSelected] = useState<string>(names[0] ?? '');
     const [compare, setCompare] = useState(false);
-    const prTable = useMemo(() => computePRTable(myExecutions), [myExecutions]);
     const activeSelected = selected || names[0] || '';
     const progress = useMemo(() => {
         if (!activeSelected)
             return [];
         if (compare && other) {
-            return computeExerciseComparison(myExecutions, otherExecutions, activeSelected).map((p) => ({
+            return pointsToComparison(points, otherPoints, activeSelected).map((p) => ({
                 date: formatShortDate(p.date),
                 a: p.a,
                 b: p.b,
             }));
         }
-        return computeExerciseProgress(myExecutions, activeSelected).map((p) => ({
+        return pointsToProgress(points, activeSelected).map((p) => ({
             date: formatShortDate(p.date),
             weight: p.weight,
         }));
-    }, [activeSelected, compare, myExecutions, otherExecutions, other]);
-    const myPR = useMemo(() => (activeSelected ? computePR(myExecutions, activeSelected) : 0), [activeSelected, myExecutions]);
-    const otherPR = useMemo(() => (activeSelected && other ? computePR(otherExecutions, activeSelected) : 0), [activeSelected, other, otherExecutions]);
+    }, [activeSelected, compare, points, otherPoints, other]);
+    const myPR = useMemo(() => (activeSelected ? pointsToPR(points, activeSelected) : 0), [activeSelected, points]);
+    const otherPR = useMemo(() => (activeSelected && other ? pointsToPR(otherPoints, activeSelected) : 0), [activeSelected, other, otherPoints]);
     const series = compare
         ? [
             { key: 'a', name: me.displayName, color: me.color },

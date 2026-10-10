@@ -1,7 +1,20 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/client';
-import { routines, routineGroups, exercises, executions, exerciseExecutions } from '@/lib/db/schema';
-import type { Routine, RoutineGroup, Exercise, RoutineExecution, ExerciseExecution } from '@/lib/types';
+import { routines, routineGroups, exercises, executions, exerciseExecutions, exerciseLog } from '@/lib/db/schema';
+import type { Routine, RoutineGroup, Exercise, RoutineExecution, ExerciseExecution, HistoryExecution, ActiveExecution } from '@/lib/types';
+
+function groupBy<T>(rows: T[], key: (row: T) => string): Map<string, T[]> {
+    const map = new Map<string, T[]>();
+    for (const row of rows) {
+        const k = key(row);
+        const list = map.get(k);
+        if (list)
+            list.push(row);
+        else
+            map.set(k, [row]);
+    }
+    return map;
+}
 
 export async function getRoutineGroups(userId: string): Promise<RoutineGroup[]> {
     return db.select().from(routineGroups).where(eq(routineGroups.userId, userId));
@@ -58,9 +71,33 @@ async function hydrateRoutine(row: typeof routines.$inferSelect): Promise<Routin
     };
 }
 
+function toRoutine(row: typeof routines.$inferSelect, exerciseRows: (typeof exercises.$inferSelect)[]): Routine {
+    return {
+        id: row.id,
+        userId: row.userId,
+        name: row.name,
+        description: row.description ?? undefined,
+        days: row.days,
+        groupIds: row.groupIds,
+        exercises: exerciseRows.map((e) => ({
+            id: e.id,
+            name: e.name,
+            muscleGroup: e.muscleGroup,
+            sets: e.sets,
+            reps: e.reps,
+            weight: e.weight,
+            notes: e.notes ?? undefined,
+        })),
+    };
+}
+
 export async function getRoutines(userId: string): Promise<Routine[]> {
-    const rows = await db.select().from(routines).where(eq(routines.userId, userId));
-    return Promise.all(rows.map(hydrateRoutine));
+    const [rows, exerciseRows] = await Promise.all([
+        db.select().from(routines).where(eq(routines.userId, userId)),
+        db.select({ exercise: exercises }).from(exercises).innerJoin(routines, eq(routines.id, exercises.routineId)).where(eq(routines.userId, userId)).orderBy(exercises.position),
+    ]);
+    const byRoutine = groupBy(exerciseRows.map((r) => r.exercise), (e) => e.routineId);
+    return rows.map((r) => toRoutine(r, byRoutine.get(r.id) ?? []));
 }
 
 export async function getRoutine(routineId: string): Promise<Routine | undefined> {
@@ -95,6 +132,7 @@ export async function deleteRoutine(routineId: string): Promise<void> {
     const executionRows = await db.select({ id: executions.id }).from(executions).where(eq(executions.routineId, routineId));
     const executionIds = executionRows.map((e) => e.id);
     if (executionIds.length) {
+        await db.delete(exerciseLog).where(inArray(exerciseLog.executionId, executionIds));
         await db.delete(exerciseExecutions).where(inArray(exerciseExecutions.executionId, executionIds));
         await db.delete(executions).where(inArray(executions.id, executionIds));
     }
@@ -120,8 +158,7 @@ export async function removeExercise(routineId: string, exerciseId: string): Pro
     await db.delete(exercises).where(and(eq(exercises.id, exerciseId), eq(exercises.routineId, routineId)));
 }
 
-async function hydrateExecution(row: typeof executions.$inferSelect): Promise<RoutineExecution> {
-    const exRows = await db.select().from(exerciseExecutions).where(eq(exerciseExecutions.executionId, row.id)).orderBy(exerciseExecutions.position);
+function toExecution(row: typeof executions.$inferSelect, exRows: (typeof exerciseExecutions.$inferSelect)[]): RoutineExecution {
     return {
         id: row.id,
         userId: row.userId,
@@ -146,18 +183,41 @@ async function hydrateExecution(row: typeof executions.$inferSelect): Promise<Ro
     };
 }
 
+async function hydrateExecution(row: typeof executions.$inferSelect): Promise<RoutineExecution> {
+    const exRows = await db.select().from(exerciseExecutions).where(eq(exerciseExecutions.executionId, row.id)).orderBy(exerciseExecutions.position);
+    return toExecution(row, exRows);
+}
+
+async function loadExecutions(userId: string, status: 'active' | 'completed'): Promise<RoutineExecution[]> {
+    const scope = and(eq(executions.userId, userId), eq(executions.status, status));
+    const [rows, exRows] = await Promise.all([
+        db.select().from(executions).where(scope),
+        db.select({ ex: exerciseExecutions }).from(exerciseExecutions).innerJoin(executions, eq(executions.id, exerciseExecutions.executionId)).where(scope).orderBy(exerciseExecutions.position),
+    ]);
+    const byExecution = groupBy(exRows.map((r) => r.ex), (e) => e.executionId);
+    return rows
+        .map((r) => toExecution(r, byExecution.get(r.id) ?? []))
+        .sort((a, b) => b.date.localeCompare(a.date));
+}
+
 export async function getExecutions(userId: string): Promise<RoutineExecution[]> {
-    const rows = await db.select().from(executions).where(eq(executions.userId, userId));
-    const filtered = rows.filter((x) => x.status === 'completed');
-    const hydrated = await Promise.all(filtered.map(hydrateExecution));
-    return hydrated.sort((a, b) => b.date.localeCompare(a.date));
+    return loadExecutions(userId, 'completed');
 }
 
 export async function getActiveExecutions(userId: string): Promise<RoutineExecution[]> {
-    const rows = await db.select().from(executions).where(eq(executions.userId, userId));
-    const filtered = rows.filter((x) => x.status === 'active');
-    const hydrated = await Promise.all(filtered.map(hydrateExecution));
-    return hydrated.sort((a, b) => b.date.localeCompare(a.date));
+    return loadExecutions(userId, 'active');
+}
+
+/** Active sessions without their exercises (the lists only show how many there are). */
+export async function getActiveExecutionSummaries(userId: string): Promise<ActiveExecution[]> {
+    const rows = await db.select({
+        id: executions.id,
+        routineId: executions.routineId,
+        routineName: executions.routineName,
+        date: executions.date,
+        exerciseCount: sql<number>`(select count(*) from exercise_executions ee where ee.execution_id = ${executions.id})`,
+    }).from(executions).where(and(eq(executions.userId, userId), eq(executions.status, 'active')));
+    return rows.map((r) => ({ ...r, exerciseCount: Number(r.exerciseCount) })).sort((a, b) => b.date.localeCompare(a.date));
 }
 
 export async function getExecution(executionId: string): Promise<RoutineExecution | undefined> {
@@ -228,7 +288,116 @@ export async function updateExecutionExercises(executionId: string, exerciseList
     return getExecution(executionId);
 }
 
+/**
+ * Closes a session keeping only the exercises explicitly marked as done, so
+ * skipped ones never reach the history, records or progress charts. A session
+ * with nothing done is discarded instead of recorded as an empty workout.
+ */
 export async function endTracking(executionId: string): Promise<RoutineExecution | undefined> {
+    await db.delete(exerciseExecutions).where(and(eq(exerciseExecutions.executionId, executionId), eq(exerciseExecutions.done, false)));
+    const kept = await db.select({ id: exerciseExecutions.id }).from(exerciseExecutions).where(eq(exerciseExecutions.executionId, executionId)).limit(1);
+    if (!kept.length) {
+        await db.delete(executions).where(eq(executions.id, executionId));
+        return undefined;
+    }
     await db.update(executions).set({ status: 'completed' }).where(eq(executions.id, executionId));
+    await syncExerciseLog(executionId);
     return getExecution(executionId);
+}
+
+function volumeOf(row: typeof exerciseExecutions.$inferSelect): number {
+    if (row.setDetails?.length)
+        return Math.round(row.setDetails.reduce((acc, set) => acc + set.reps * set.weight, 0));
+    return Math.round(row.sets * row.reps * row.weight);
+}
+
+/** Rebuilds the log rows of one finished session from its exercise rows. */
+export async function syncExerciseLog(executionId: string, options: { includeAll?: boolean } = {}): Promise<void> {
+    await db.delete(exerciseLog).where(eq(exerciseLog.executionId, executionId));
+    const execRows = await db.select().from(executions).where(eq(executions.id, executionId)).limit(1);
+    const execution = execRows[0];
+    if (!execution || execution.status !== 'completed')
+        return;
+    const exRows = await db.select().from(exerciseExecutions).where(eq(exerciseExecutions.executionId, executionId)).orderBy(exerciseExecutions.position);
+    const kept = options.includeAll ? exRows : exRows.filter((e) => e.done);
+    if (!kept.length)
+        return;
+    await db.insert(exerciseLog).values(kept.map((e, i) => ({
+        id: crypto.randomUUID(),
+        userId: execution.userId,
+        executionId,
+        date: execution.date,
+        exerciseName: e.exerciseName,
+        muscleGroup: e.muscleGroup,
+        sets: e.sets,
+        reps: e.reps,
+        weight: e.weight,
+        volume: volumeOf(e),
+        position: i,
+    })));
+}
+
+/**
+ * One-off backfill for sessions finished before the log existed. Those never had
+ * a reliable "done" flag, so every exercise they recorded is kept, as the screens showed.
+ */
+export async function rebuildExerciseLog(userId?: string): Promise<number> {
+    const rows = await db.select({ id: executions.id }).from(executions).where(userId ? and(eq(executions.userId, userId), eq(executions.status, 'completed')) : eq(executions.status, 'completed'));
+    for (let i = 0; i < rows.length; i += 10)
+        await Promise.all(rows.slice(i, i + 10).map((row) => syncExerciseLog(row.id, { includeAll: true })));
+    return rows.length;
+}
+
+function toHistory(rows: {
+    id: string;
+    routineId: string;
+    routineName: string;
+    date: string;
+    exerciseName: string | null;
+    muscleGroup: string | null;
+    sets: number | null;
+    reps: number | null;
+    weight: number | null;
+}[]): HistoryExecution[] {
+    const byId = new Map<string, HistoryExecution>();
+    for (const r of rows) {
+        let entry = byId.get(r.id);
+        if (!entry) {
+            entry = { id: r.id, routineId: r.routineId, routineName: r.routineName, date: r.date, exercises: [] };
+            byId.set(r.id, entry);
+        }
+        if (r.exerciseName !== null) {
+            entry.exercises.push({ exerciseName: r.exerciseName, muscleGroup: r.muscleGroup ?? '', sets: r.sets ?? 0, reps: r.reps ?? 0, weight: r.weight ?? 0 });
+        }
+    }
+    return Array.from(byId.values());
+}
+
+const historyColumns = {
+    id: executions.id,
+    routineId: executions.routineId,
+    routineName: executions.routineName,
+    date: executions.date,
+    exerciseName: exerciseLog.exerciseName,
+    muscleGroup: exerciseLog.muscleGroup,
+    sets: exerciseLog.sets,
+    reps: exerciseLog.reps,
+    weight: exerciseLog.weight,
+};
+
+/** Finished sessions with their exercises, newest first, in a single statement. */
+export async function getHistory(userId: string): Promise<HistoryExecution[]> {
+    const rows = await db.select(historyColumns).from(executions)
+        .leftJoin(exerciseLog, eq(exerciseLog.executionId, executions.id))
+        .where(and(eq(executions.userId, userId), eq(executions.status, 'completed')))
+        .orderBy(desc(executions.date), executions.id, exerciseLog.position);
+    return toHistory(rows);
+}
+
+export async function getRoutineHistory(userId: string, routineId: string): Promise<HistoryExecution[]> {
+    const rows = await db.select(historyColumns).from(executions)
+        .leftJoin(exerciseLog, eq(exerciseLog.executionId, executions.id))
+        .where(and(eq(executions.userId, userId), eq(executions.routineId, routineId), eq(executions.status, 'completed')))
+        .orderBy(desc(executions.date), executions.id, exerciseLog.position);
+    return toHistory(rows);
 }
