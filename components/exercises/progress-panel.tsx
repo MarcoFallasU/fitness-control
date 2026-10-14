@@ -2,6 +2,7 @@
 import { useMemo, useState } from 'react';
 import { Trophy, Flame } from 'lucide-react';
 import { SectionCard } from '@/components/section-card';
+import { ExportLink } from '@/components/export-link';
 import { ThemedLineChart } from '@/components/charts';
 import { pointsToProgress, pointsToComparison, pointsToPR } from '@/lib/exercises-utils';
 import type { ExerciseStats, ProgressPoint } from '@/lib/exercises-utils';
@@ -87,7 +88,7 @@ export function ProgressPanel({ me, other, stats, otherPoints }: ProgressPanelPr
       </SectionCard>
 
 
-      <SectionCard title="Récords personales" subtitle="Peso máximo histórico por ejercicio">
+      <SectionCard title="Récords personales" subtitle="Peso máximo histórico por ejercicio" action={<ExportLink kind="exercises"/>}>
         <ul className="flex flex-col divide-y divide-border">
           {prTable.map((row, i) => (<li key={row.exerciseName} className="flex items-center justify-between gap-3 py-2.5">
               <div className="min-w-0">

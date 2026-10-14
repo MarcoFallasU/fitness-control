@@ -19,3 +19,7 @@ export async function setCalories(userId: string, date: string, value: number): 
     await db.insert(calories).values(entry);
     return entry;
 }
+
+export async function deleteCalories(userId: string, id: string): Promise<void> {
+    await db.delete(calories).where(and(eq(calories.id, id), eq(calories.userId, userId)));
+}

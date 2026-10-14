@@ -1,11 +1,14 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Pencil } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { deleteCaloriesAction } from '@/app/(app)/calories/actions';
 import { PageHeader } from '@/components/page-header';
 import { SectionCard } from '@/components/section-card';
 import { MetricCard } from '@/components/metric-card';
 import { ThemedBarChart, ThemedLineChart } from '@/components/charts';
+import { ConfirmDialog } from '@/components/confirm-dialog';
+import { ExportLink } from '@/components/export-link';
 import { CalorieForm } from './calorie-form';
 import { findTodayEntry, computeAverage, computeDailySeries, computeWeeklyAverages, computeMonthlyAverages, computeCalorieComparison, } from '@/lib/calories-utils';
 import type { User, CalorieEntry } from '@/lib/types';
@@ -16,10 +19,13 @@ interface CaloriesViewProps {
     entries: CalorieEntry[];
     otherEntries: CalorieEntry[];
 }
+const RECENT_COUNT = 30;
 export function CaloriesView({ me, other, entries, otherEntries }: CaloriesViewProps) {
     const router = useRouter();
     const [formOpen, setFormOpen] = useState(false);
     const [compare, setCompare] = useState(false);
+    const [showAll, setShowAll] = useState(false);
+    const [toDelete, setToDelete] = useState<CalorieEntry | null>(null);
     const today = useMemo(() => findTodayEntry(entries, TODAY_ISO), [entries]);
     const avg7 = useMemo(() => computeAverage(entries, 7), [entries]);
     const avg30 = useMemo(() => computeAverage(entries, 30), [entries]);
@@ -45,7 +51,10 @@ export function CaloriesView({ me, other, entries, otherEntries }: CaloriesViewP
         month: formatMonth(m.month),
         calories: m.calories,
     })), [entries]);
-    const history = useMemo(() => [...entries].reverse().slice(0, 30), [entries]);
+    const history = useMemo(() => {
+        const newestFirst = [...entries].reverse();
+        return showAll ? newestFirst : newestFirst.slice(0, RECENT_COUNT);
+    }, [entries, showAll]);
     return (<div className="pb-16">
       <PageHeader eyebrow="NUTRICIÓN" title="Control" highlight="calórico" action={<button onClick={() => setFormOpen(true)} className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-3 font-heading text-base uppercase tracking-wide text-brand-foreground transition-transform hover:-translate-y-0.5">
             {today ? <Pencil className="size-5"/> : <Plus className="size-5"/>}
@@ -87,14 +96,24 @@ export function CaloriesView({ me, other, entries, otherEntries }: CaloriesViewP
 
 
         <div className="mt-6">
-          <SectionCard title="Historial" subtitle="Últimos 30 registros">
+          <SectionCard title="Historial" subtitle={showAll || entries.length <= RECENT_COUNT ? `${entries.length} registros` : `Últimos ${RECENT_COUNT} de ${entries.length} registros`} action={entries.length > 0 ? (<div className="flex flex-wrap items-center gap-2">
+                {entries.length > RECENT_COUNT && (<button type="button" onClick={() => setShowAll((v) => !v)} className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:border-ring hover:text-foreground">
+                    {showAll ? 'Ver menos' : 'Ver todo'}
+                  </button>)}
+                <ExportLink kind="calories"/>
+              </div>) : undefined}>
             {history.length === 0 ? (<p className="py-8 text-center text-sm text-muted-foreground">
                 Aún no hay registros calóricos.
               </p>) : (<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                 {history.map((c) => (<div key={c.id} className="rounded-md border border-border p-3">
-                    <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                      {formatLongDate(c.date)}
-                    </p>
+                    <div className="flex items-start justify-between gap-1">
+                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {formatLongDate(c.date)}
+                      </p>
+                      <button type="button" aria-label={`Eliminar el registro del ${formatLongDate(c.date)}`} onClick={() => setToDelete(c)} className="-m-1 shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:text-destructive">
+                        <Trash2 className="size-3.5"/>
+                      </button>
+                    </div>
                     <p className="font-heading text-2xl leading-tight">
                       {formatNumber(c.calories)}
                       <span className="text-xs opacity-60"> kcal</span>
@@ -109,5 +128,10 @@ export function CaloriesView({ me, other, entries, otherEntries }: CaloriesViewP
                 setFormOpen(false);
                 router.refresh();
             }}/>)}
+
+      {toDelete && (<ConfirmDialog title="Eliminar registro" message={`Se eliminará el registro de ${formatNumber(toDelete.calories)} kcal del ${formatLongDate(toDelete.date)}. Esta acción no se puede deshacer.`} onConfirm={async () => {
+                await deleteCaloriesAction(toDelete.id);
+                router.refresh();
+            }} onClose={() => setToDelete(null)}/>)}
     </div>);
 }

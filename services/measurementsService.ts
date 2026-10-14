@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db/client';
 import { measurements } from '@/lib/db/schema';
 import type { MeasurementEntry, MeasurementZone } from '@/lib/types';
@@ -16,4 +16,8 @@ export async function addMeasurement(userId: string, date: string, values: Parti
     const id = crypto.randomUUID();
     await db.insert(measurements).values({ id, userId, date, values });
     return { id, userId, date, values };
+}
+
+export async function deleteMeasurement(userId: string, id: string): Promise<void> {
+    await db.delete(measurements).where(and(eq(measurements.id, id), eq(measurements.userId, userId)));
 }

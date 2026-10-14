@@ -70,6 +70,8 @@ export interface CalorieEntry {
 
 /** What the history screens need from a finished exercise, without per-set details. */
 export interface HistoryExercise {
+    /** Id of the log row, used to delete this single exercise from a finished session. */
+    id: string;
     exerciseName: string;
     muscleGroup: string;
     sets: number;

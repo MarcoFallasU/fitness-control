@@ -353,6 +353,7 @@ function toHistory(rows: {
     routineId: string;
     routineName: string;
     date: string;
+    logId: string | null;
     exerciseName: string | null;
     muscleGroup: string | null;
     sets: number | null;
@@ -366,8 +367,8 @@ function toHistory(rows: {
             entry = { id: r.id, routineId: r.routineId, routineName: r.routineName, date: r.date, exercises: [] };
             byId.set(r.id, entry);
         }
-        if (r.exerciseName !== null) {
-            entry.exercises.push({ exerciseName: r.exerciseName, muscleGroup: r.muscleGroup ?? '', sets: r.sets ?? 0, reps: r.reps ?? 0, weight: r.weight ?? 0 });
+        if (r.exerciseName !== null && r.logId !== null) {
+            entry.exercises.push({ id: r.logId, exerciseName: r.exerciseName, muscleGroup: r.muscleGroup ?? '', sets: r.sets ?? 0, reps: r.reps ?? 0, weight: r.weight ?? 0 });
         }
     }
     return Array.from(byId.values());
@@ -378,6 +379,7 @@ const historyColumns = {
     routineId: executions.routineId,
     routineName: executions.routineName,
     date: executions.date,
+    logId: exerciseLog.id,
     exerciseName: exerciseLog.exerciseName,
     muscleGroup: exerciseLog.muscleGroup,
     sets: exerciseLog.sets,
@@ -400,4 +402,63 @@ export async function getRoutineHistory(userId: string, routineId: string): Prom
         .where(and(eq(executions.userId, userId), eq(executions.routineId, routineId), eq(executions.status, 'completed')))
         .orderBy(desc(executions.date), executions.id, exerciseLog.position);
     return toHistory(rows);
+}
+
+/** Removes a session and everything recorded for it. Only its owner can do it. */
+export async function deleteExecution(userId: string, executionId: string): Promise<boolean> {
+    const owned = await db.select({ id: executions.id }).from(executions).where(and(eq(executions.id, executionId), eq(executions.userId, userId))).limit(1);
+    if (!owned.length)
+        return false;
+    await db.batch([
+        db.delete(exerciseLog).where(eq(exerciseLog.executionId, executionId)),
+        db.delete(exerciseExecutions).where(eq(exerciseExecutions.executionId, executionId)),
+        db.delete(executions).where(eq(executions.id, executionId)),
+    ]);
+    return true;
+}
+
+/** Removes one exercise from a finished session; a session left with no exercises is removed too. */
+export async function deleteLoggedExercise(userId: string, logId: string): Promise<boolean> {
+    const found = await db.select().from(exerciseLog).where(and(eq(exerciseLog.id, logId), eq(exerciseLog.userId, userId))).limit(1);
+    const row = found[0];
+    if (!row)
+        return false;
+    await db.delete(exerciseLog).where(eq(exerciseLog.id, logId));
+    const sameName = await db.select({ id: exerciseLog.id }).from(exerciseLog)
+        .where(and(eq(exerciseLog.executionId, row.executionId), eq(exerciseLog.exerciseName, row.exerciseName))).limit(1);
+    if (!sameName.length) {
+        await db.delete(exerciseExecutions).where(and(eq(exerciseExecutions.executionId, row.executionId), eq(exerciseExecutions.exerciseName, row.exerciseName)));
+    }
+    const left = await db.select({ id: exerciseLog.id }).from(exerciseLog).where(eq(exerciseLog.executionId, row.executionId)).limit(1);
+    if (!left.length)
+        await deleteExecution(userId, row.executionId);
+    return true;
+}
+
+export interface ExerciseExportRow {
+    date: string;
+    routine: string;
+    exercise: string;
+    muscleGroup: string;
+    sets: number;
+    reps: number;
+    weight: number;
+    volume: number;
+}
+
+/** Every finished exercise of a user, one row each, oldest first. */
+export async function getExerciseExportRows(userId: string): Promise<ExerciseExportRow[]> {
+    return db.select({
+        date: exerciseLog.date,
+        routine: executions.routineName,
+        exercise: exerciseLog.exerciseName,
+        muscleGroup: exerciseLog.muscleGroup,
+        sets: exerciseLog.sets,
+        reps: exerciseLog.reps,
+        weight: exerciseLog.weight,
+        volume: exerciseLog.volume,
+    }).from(exerciseLog)
+        .innerJoin(executions, eq(executions.id, exerciseLog.executionId))
+        .where(eq(exerciseLog.userId, userId))
+        .orderBy(exerciseLog.date, exerciseLog.executionId, exerciseLog.position);
 }

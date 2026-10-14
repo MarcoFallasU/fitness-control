@@ -6,6 +6,7 @@ import { logoutAction } from '@/app/(app)/actions';
 import { changePasswordAction, updateProfileAction } from '@/app/(app)/settings/actions';
 import { PageHeader } from '@/components/page-header';
 import { SectionCard } from '@/components/section-card';
+import { ExportLink } from '@/components/export-link';
 import { Spinner } from '@/components/ui/spinner';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { setPreferences, usePreferences } from '@/lib/preferences';
@@ -184,6 +185,20 @@ function WallpaperSection() {
     </SectionCard>);
 }
 
+function DataSection() {
+    return (<SectionCard title="Exportar mis datos">
+      <p className="text-sm text-muted-foreground">
+        Descarga tus registros para guardarlos o abrirlos en una hoja de cálculo. Cada archivo trae solo tus datos.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <ExportLink kind="exercises" label="Ejercicios (CSV)"/>
+        <ExportLink kind="measurements" label="Medidas (CSV)"/>
+        <ExportLink kind="calories" label="Calorías (CSV)"/>
+        <ExportLink kind="all" label="Todo (JSON)"/>
+      </div>
+    </SectionCard>);
+}
+
 function PreferencesSection() {
     const prefs = usePreferences();
     return (<SectionCard title="Preferencias del dispositivo">
@@ -222,6 +237,7 @@ export function SettingsView() {
         <PasswordSection/>
         <WallpaperSection/>
         <PreferencesSection/>
+        <DataSection/>
         <form action={logoutAction}>
           <SubmitButton className="inline-flex items-center gap-2 rounded-full border border-border bg-[var(--lg-fill-danger)] px-6 py-3 text-sm font-bold">
             <LogOut className="size-4"/>

@@ -2,11 +2,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, Pencil, Plus, Trash2, Play, History, Share2, Dumbbell, Flag, Activity, UserPlus, Check, X, } from 'lucide-react';
-import { startTrackingAction, endTrackingAction, removeExerciseAction, createRoutineGroupAction, updateRoutineGroupAction, deleteRoutineGroupAction, getRoutineHistoryAction, } from '@/app/(app)/exercises/actions';
+import { startTrackingAction, endTrackingAction, removeExerciseAction, createRoutineGroupAction, updateRoutineGroupAction, deleteRoutineGroupAction, getRoutineHistoryAction, deleteExecutionAction, deleteLoggedExerciseAction, } from '@/app/(app)/exercises/actions';
 import type { Routine, Exercise, RoutineGroup, ActiveExecution, HistoryExecution, User } from '@/lib/types';
 import { formatLongDate } from '@/lib/format';
 import { useBusy } from '@/lib/use-busy';
 import { Spinner } from '@/components/ui/spinner';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { RoutineForm } from './routine-form';
 import { ExerciseForm } from './exercise-form';
 interface RoutinesPanelProps {
@@ -51,19 +52,30 @@ export function RoutinesPanel({ userId, other, routines, groups, completedCounts
         exercise?: Exercise;
     } | null>(null);
     const [historyFor, setHistoryFor] = useState<string | null>(null);
+    const [confirmDelete, setConfirmDelete] = useState<{
+        kind: 'session' | 'exercise';
+        id: string;
+        label: string;
+    } | null>(null);
     // History is fetched the first time a routine's history is opened, not with the page.
     const [historyByRoutine, setHistoryByRoutine] = useState<Record<string, HistoryExecution[] | 'error'>>({});
+    function loadHistory(routineId: string) {
+        getRoutineHistoryAction(routineId)
+            .then((history) => setHistoryByRoutine((prev) => ({ ...prev, [routineId]: history })))
+            .catch(() => setHistoryByRoutine((prev) => ({ ...prev, [routineId]: 'error' })));
+    }
     useEffect(() => {
+        // The counts changed (a session was finished or deleted): refetch the history that is open.
         setHistoryByRoutine({});
+        if (historyFor)
+            loadHistory(historyFor);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [completedCounts]);
     function toggleHistory(routineId: string) {
         const opening = historyFor !== routineId;
         setHistoryFor(opening ? routineId : null);
-        if (!opening || historyByRoutine[routineId])
-            return;
-        getRoutineHistoryAction(routineId)
-            .then((history) => setHistoryByRoutine((prev) => ({ ...prev, [routineId]: history })))
-            .catch(() => setHistoryByRoutine((prev) => ({ ...prev, [routineId]: 'error' })));
+        if (opening && !historyByRoutine[routineId])
+            loadHistory(routineId);
     }
     const [inviting, setInviting] = useState<string | null>(null);
     const [editingGroup, setEditingGroup] = useState<{ id: string; name: string } | null>(null);
@@ -265,15 +277,25 @@ export function RoutinesPanel({ userId, other, routines, groups, completedCounts
                 Aún no has completado esta rutina.
               </p>) : (<ul className="flex flex-col gap-3">
                 {history.map((x) => (<li key={x.id} className="rounded-md border border-border bg-card p-3">
-                    <p className="mb-2 font-heading text-base uppercase tracking-wide">
-                      {formatLongDate(x.date)}
-                    </p>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="font-heading text-base uppercase tracking-wide">
+                        {formatLongDate(x.date)}
+                      </p>
+                      <button type="button" aria-label={`Eliminar la sesión del ${formatLongDate(x.date)}`} onClick={() => setConfirmDelete({ kind: 'session', id: x.id, label: formatLongDate(x.date) })} className="shrink-0 rounded-full p-1.5 text-muted-foreground transition-colors hover:text-destructive">
+                        <Trash2 className="size-4"/>
+                      </button>
+                    </div>
                     <div className="flex flex-wrap gap-2">
-                      {x.exercises.map((e, i) => (<span key={i} className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs">
-                          <span className="font-semibold">{e.exerciseName}</span>{' '}
-                          <span className="text-muted-foreground">
-                            {e.sets}×{e.reps} · {e.weight}kg
+                      {x.exercises.map((e) => (<span key={e.id} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted py-1 pl-2.5 pr-1.5 text-xs">
+                          <span>
+                            <span className="font-semibold">{e.exerciseName}</span>{' '}
+                            <span className="text-muted-foreground">
+                              {e.sets}×{e.reps} · {e.weight}kg
+                            </span>
                           </span>
+                          <button type="button" aria-label={`Quitar ${e.exerciseName} de esta sesión`} onClick={() => setConfirmDelete({ kind: 'exercise', id: e.id, label: e.exerciseName })} className="rounded-full p-0.5 text-muted-foreground transition-colors hover:text-destructive">
+                            <X className="size-3"/>
+                          </button>
                         </span>))}
                     </div>
                   </li>))}
@@ -408,6 +430,16 @@ export function RoutinesPanel({ userId, other, routines, groups, completedCounts
           <Plus className="size-4"/>
           Nuevo grupo
         </button>)}
+
+      {confirmDelete && (<ConfirmDialog title={confirmDelete.kind === 'session' ? 'Eliminar sesión' : 'Quitar ejercicio'} message={confirmDelete.kind === 'session'
+                ? `Se eliminará la sesión del ${confirmDelete.label} con todos sus ejercicios. Esta acción no se puede deshacer.`
+                : `Se quitará "${confirmDelete.label}" de esta sesión. Si era el único ejercicio, la sesión también se elimina. Esta acción no se puede deshacer.`} onConfirm={async () => {
+                if (confirmDelete.kind === 'session')
+                    await deleteExecutionAction(confirmDelete.id);
+                else
+                    await deleteLoggedExerciseAction(confirmDelete.id);
+                bump();
+            }} onClose={() => setConfirmDelete(null)}/>)}
 
       {routineForm && (<RoutineForm userId={userId} routine={routineForm.routine} executionCount={routineForm.executionCount} initialGroups={groups} onClose={() => setRoutineForm(null)} onSaved={() => {
                 setRoutineForm(null);

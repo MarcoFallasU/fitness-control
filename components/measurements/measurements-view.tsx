@@ -1,11 +1,14 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, Minus, Trash2 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
+import { deleteMeasurementAction } from '@/app/(app)/measurements/actions';
 import { PageHeader } from '@/components/page-header';
 import { SectionCard } from '@/components/section-card';
 import { ThemedLineChart } from '@/components/charts';
+import { ConfirmDialog } from '@/components/confirm-dialog';
+import { ExportLink } from '@/components/export-link';
 import { MeasurementForm } from './measurement-form';
 import { MEASUREMENT_ZONES, CHART_ZONES, computeZoneDeltas, computeZoneSeries, zoneLabel, zoneUnit, } from '@/lib/measurements-utils';
 import type { MeasurementEntry, MeasurementZone } from '@/lib/types';
@@ -22,6 +25,7 @@ export function MeasurementsView({ entries }: MeasurementsViewProps) {
         'back',
     ]);
     const [formOpen, setFormOpen] = useState(false);
+    const [toDelete, setToDelete] = useState<MeasurementEntry | null>(null);
     const userId = user.id;
     const deltas = useMemo(() => computeZoneDeltas(entries), [entries]);
     const series = useMemo(() => {
@@ -41,7 +45,7 @@ export function MeasurementsView({ entries }: MeasurementsViewProps) {
           </button>}/>
 
       <div className="grid grid-cols-1 gap-6 px-5 py-8 sm:px-8 lg:grid-cols-3 lg:px-12">
-        
+
         <SectionCard title="Evolución por zona" subtitle="Selecciona las zonas que quieres comparar" className="lg:col-span-2">
           <div className="mb-5 flex flex-wrap gap-2">
             {CHART_ZONES.map((z) => {
@@ -60,7 +64,7 @@ export function MeasurementsView({ entries }: MeasurementsViewProps) {
         }))}/>
         </SectionCard>
 
-        
+
         <SectionCard title="Primera vs última" subtitle="Cambio total desde tu primer registro">
           <ul className="flex flex-col divide-y divide-border">
             {deltas.map((d) => {
@@ -94,9 +98,9 @@ export function MeasurementsView({ entries }: MeasurementsViewProps) {
         </SectionCard>
       </div>
 
-      
+
       <div className="px-5 sm:px-8 lg:px-12">
-        <SectionCard title="Historial" subtitle={`${entries.length} entradas registradas`}>
+        <SectionCard title="Historial" subtitle={`${entries.length} entradas registradas`} action={entries.length > 0 ? <ExportLink kind="measurements"/> : undefined}>
           {entries.length === 0 ? (<p className="py-8 text-center text-sm text-muted-foreground">
               Aún no hay registros. Crea tu primera entrada.
             </p>) : (<div className="overflow-x-auto">
@@ -109,6 +113,7 @@ export function MeasurementsView({ entries }: MeasurementsViewProps) {
                     {MEASUREMENT_ZONES.map((z) => (<th key={z.key} className="px-3 py-3 text-right font-mono text-xs uppercase tracking-wider text-muted-foreground">
                         {z.label} ({z.unit})
                       </th>))}
+                    <th className="w-10"><span className="sr-only">Eliminar</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -119,6 +124,11 @@ export function MeasurementsView({ entries }: MeasurementsViewProps) {
                       {MEASUREMENT_ZONES.map((z) => (<td key={z.key} className="px-3 py-3 text-right tabular-nums">
                           {e.values[z.key] != null ? (e.values[z.key]) : (<span className="text-muted-foreground/40">—</span>)}
                         </td>))}
+                      <td className="px-2 py-3 text-right">
+                        <button type="button" aria-label={`Eliminar la entrada del ${formatLongDate(e.date)}`} onClick={() => setToDelete(e)} className="rounded-full p-1.5 text-muted-foreground transition-colors hover:text-destructive">
+                          <Trash2 className="size-4"/>
+                        </button>
+                      </td>
                     </tr>))}
                 </tbody>
               </table>
@@ -130,5 +140,10 @@ export function MeasurementsView({ entries }: MeasurementsViewProps) {
                 setFormOpen(false);
                 router.refresh();
             }}/>)}
+
+      {toDelete && (<ConfirmDialog title="Eliminar entrada" message={`Se eliminará la entrada del ${formatLongDate(toDelete.date)} con todas sus medidas. Esta acción no se puede deshacer.`} onConfirm={async () => {
+                await deleteMeasurementAction(toDelete.id);
+                router.refresh();
+            }} onClose={() => setToDelete(null)}/>)}
     </div>);
 }

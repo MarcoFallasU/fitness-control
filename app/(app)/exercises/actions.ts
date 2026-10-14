@@ -90,3 +90,19 @@ export async function finalizeExecutionAction(executionId: string, exerciseList:
     await svc.endTracking(executionId);
     refresh();
 }
+
+export async function deleteExecutionAction(executionId: string): Promise<void> {
+    const user = await getCurrentUser();
+    if (!user)
+        return;
+    await svc.deleteExecution(user.id, executionId);
+    refresh();
+}
+
+export async function deleteLoggedExerciseAction(logId: string): Promise<void> {
+    const user = await getCurrentUser();
+    if (!user)
+        return;
+    await svc.deleteLoggedExercise(user.id, logId);
+    refresh();
+}
