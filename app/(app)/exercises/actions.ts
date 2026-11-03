@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { getCurrentUser } from '@/lib/auth/session';
 import * as svc from '@/services/exercisesService';
-import type { Routine, RoutineGroup, Exercise, RoutineExecution, ExerciseExecution, HistoryExecution } from '@/lib/types';
+import type { Routine, RoutineGroup, Exercise, RoutineExecution, ExerciseExecution, HistoryExecution, KnownExercise } from '@/lib/types';
 
 function refresh() {
     revalidatePath('/exercises');
@@ -69,8 +69,8 @@ export async function getRoutineHistoryAction(routineId: string): Promise<Histor
     return svc.getRoutineHistory(user.id, routineId);
 }
 
-export async function startTrackingAction(userId: string, routineId: string): Promise<RoutineExecution | undefined> {
-    const execution = await svc.startTracking(userId, routineId);
+export async function startTrackingAction(userId: string, routineId: string, localDate?: string): Promise<RoutineExecution | undefined> {
+    const execution = await svc.startTracking(userId, routineId, localDate);
     refresh();
     return execution;
 }
@@ -105,4 +105,11 @@ export async function deleteLoggedExerciseAction(logId: string): Promise<void> {
         return;
     await svc.deleteLoggedExercise(user.id, logId);
     refresh();
+}
+
+export async function getKnownExercisesAction(): Promise<KnownExercise[]> {
+    const user = await getCurrentUser();
+    if (!user)
+        return [];
+    return svc.getKnownExercises(user.id);
 }

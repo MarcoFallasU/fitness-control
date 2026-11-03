@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/client';
 import { routines, routineGroups, exercises, executions, exerciseExecutions, exerciseLog } from '@/lib/db/schema';
-import type { Routine, RoutineGroup, Exercise, RoutineExecution, ExerciseExecution, HistoryExecution, ActiveExecution } from '@/lib/types';
+import type { Routine, RoutineGroup, Exercise, RoutineExecution, ExerciseExecution, HistoryExecution, ActiveExecution, KnownExercise } from '@/lib/types';
 
 function groupBy<T>(rows: T[], key: (row: T) => string): Map<string, T[]> {
     const map = new Map<string, T[]>();
@@ -229,7 +229,8 @@ function todayISO(): string {
     return new Date().toISOString().slice(0, 10);
 }
 
-export async function startTracking(userId: string, routineId: string): Promise<RoutineExecution | undefined> {
+/** `localDate` is the user's own calendar day; the server runs in UTC, so after the evening it would be tomorrow. */
+export async function startTracking(userId: string, routineId: string, localDate?: string): Promise<RoutineExecution | undefined> {
     const routine = await getRoutine(routineId);
     if (!routine)
         return undefined;
@@ -239,7 +240,7 @@ export async function startTracking(userId: string, routineId: string): Promise<
         userId,
         routineId,
         routineName: routine.name,
-        date: todayISO(),
+        date: localDate && /^\d{4}-\d{2}-\d{2}$/.test(localDate) ? localDate : todayISO(),
         status: 'active',
     });
     if (routine.exercises.length) {
@@ -461,4 +462,24 @@ export async function getExerciseExportRows(userId: string): Promise<ExerciseExp
         .innerJoin(executions, eq(executions.id, exerciseLog.executionId))
         .where(eq(exerciseLog.userId, userId))
         .orderBy(exerciseLog.date, exerciseLog.executionId, exerciseLog.position);
+}
+
+/**
+ * Exercises a user can add to a running session: everything they have logged or defined in one of
+ * their routines, once per name. The most recent logged performance wins so the defaults are current.
+ */
+export async function getKnownExercises(userId: string): Promise<KnownExercise[]> {
+    const [logged, defined] = await Promise.all([
+        db.select({ name: exerciseLog.exerciseName, muscleGroup: exerciseLog.muscleGroup, sets: exerciseLog.sets, reps: exerciseLog.reps, weight: exerciseLog.weight })
+            .from(exerciseLog).where(eq(exerciseLog.userId, userId)).orderBy(desc(exerciseLog.date)),
+        db.select({ name: exercises.name, muscleGroup: exercises.muscleGroup, sets: exercises.sets, reps: exercises.reps, weight: exercises.weight })
+            .from(exercises).innerJoin(routines, eq(routines.id, exercises.routineId)).where(eq(routines.userId, userId)),
+    ]);
+    const byName = new Map<string, KnownExercise>();
+    for (const row of [...logged, ...defined]) {
+        const key = row.name.trim().toLowerCase();
+        if (!byName.has(key))
+            byName.set(key, row);
+    }
+    return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name, 'es'));
 }

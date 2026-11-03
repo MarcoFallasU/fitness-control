@@ -12,17 +12,24 @@ import type { User } from '@/lib/types';
  */
 
 export async function getDashboardData(user: User) {
-    const [measurements, history, calories, routines] = await Promise.all([
+    const [measurements, history, calories, routines, active] = await Promise.all([
         getMeasurements(user.id),
         getHistory(user.id),
         getCalories(user.id),
         getRoutines(user.id),
+        getActiveExecutionSummaries(user.id),
     ]);
     const stats = buildExerciseStats(history);
+    // routineId -> running session, so today's routine can offer "Continuar" instead of starting a second one.
+    const activeByRoutine: Record<string, string> = {};
+    active.forEach((x) => {
+        activeByRoutine[x.routineId] ??= x.id;
+    });
     return {
         measurements,
         calories,
         routines,
+        activeByRoutine,
         prTable: stats.prTable,
         sessionsThisMonth: countExecutionsThisMonth(history),
         sessionDates: Array.from(new Set(history.map((x) => x.date))),

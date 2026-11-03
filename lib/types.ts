@@ -92,3 +92,12 @@ export interface ActiveExecution {
     date: string;
     exerciseCount: number;
 }
+
+/** An exercise the user already has on record, offered when adding one to a running session. */
+export interface KnownExercise {
+    name: string;
+    muscleGroup: string;
+    sets: number;
+    reps: number;
+    weight: number;
+}

@@ -297,31 +297,6 @@ html[data-wallpaper='dawn'] { --wallpaper: var(--wp-dawn); }
     text-shadow: var(--lg-text-shadow-strong);
   }
 
-  .session-sheet {
-    touch-action: none;
-    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .session-sheet.dragging {
-    transition: none;
-  }
-
-  .session-scrim {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.001);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease, background-color 0.3s ease;
-    z-index: 40;
-  }
-
-  .session-scrim.show {
-    opacity: 1;
-    background: rgba(0, 0, 0, 0.45);
-    pointer-events: auto;
-  }
-
   .field-value {
     width: 100%;
     max-width: 68px;
@@ -395,8 +370,28 @@ html[data-wallpaper='dawn'] { --wallpaper: var(--wp-dawn); }
   }
 }
 
+/* `backwards`, not `both`: a forwards-filled transform would override the press feedback below. */
 .animate-rise {
-  animation: rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Feedback on touch-down, not on release. */
+.press {
+  transition: transform 120ms ease-out, opacity 120ms ease-out;
+}
+
+.press:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise { animation: fade-in 0.3s ease backwards; }
+  .press:active { transform: none; opacity: 0.75; }
 }
 
 @keyframes marquee {

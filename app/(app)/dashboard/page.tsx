@@ -7,5 +7,5 @@ export default async function DashboardPage() {
     if (!user)
         redirect('/login');
     const data = await getDashboardData(user);
-    return (<DashboardView displayName={user.displayName} {...data}/>);
+    return (<DashboardView userId={user.id} displayName={user.displayName} {...data}/>);
 }

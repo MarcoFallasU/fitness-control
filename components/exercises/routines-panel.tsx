@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, Pencil, Plus, Trash2, Play, History, Share2, Dumbbell, Flag, Activity, UserPlus, Check, X, } from 'lucide-react';
 import { startTrackingAction, endTrackingAction, removeExerciseAction, createRoutineGroupAction, updateRoutineGroupAction, deleteRoutineGroupAction, getRoutineHistoryAction, deleteExecutionAction, deleteLoggedExerciseAction, } from '@/app/(app)/exercises/actions';
+import { localISODate } from '@/lib/local-date';
 import type { Routine, Exercise, RoutineGroup, ActiveExecution, HistoryExecution, User } from '@/lib/types';
 import { formatLongDate } from '@/lib/format';
 import { useBusy } from '@/lib/use-busy';
@@ -135,7 +136,7 @@ export function RoutinesPanel({ userId, other, routines, groups, completedCounts
           </button>
           <div className="flex flex-wrap gap-2">
             <button disabled={isBusy(`start:${routine.id}`)} onClick={() => run(`start:${routine.id}`, async () => {
-                const exec = await startTrackingAction(userId, routine.id);
+                const exec = await startTrackingAction(userId, routine.id, localISODate());
                 if (exec) {
                     router.push(`/session/${exec.id}`);
                     return 'keep';
@@ -188,7 +189,7 @@ export function RoutinesPanel({ userId, other, routines, groups, completedCounts
                     </button>
                     {canInvite && (<button onClick={async () => {
                             setInviting(x.id);
-                            await startTrackingAction(other!.id, routine.id);
+                            await startTrackingAction(other!.id, routine.id, localISODate());
                             setInviting(null);
                             bump();
                         }} disabled={inviting === x.id} className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-muted disabled:opacity-60">
